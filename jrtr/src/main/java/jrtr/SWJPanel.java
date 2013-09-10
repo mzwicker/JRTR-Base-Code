@@ -35,8 +35,10 @@ public class SWJPanel extends JPanel {
 		
 		public void ancestorResized(HierarchyEvent e)
 		{
-			Dimension d = e.getChanged().getSize();
-			renderContext.setViewportSize(d.width, d.height);
+			if(e.getChanged() instanceof JPanel) {
+				Dimension d = e.getChanged().getSize();
+				renderContext.setViewportSize(d.width, d.height);
+			}
 		}
 	}
 
@@ -66,6 +68,7 @@ public class SWJPanel extends JPanel {
 		this.renderContext = renderContext;
 		this.addHierarchyBoundsListener(new SWPanelHierarchyBoundsListener(renderContext));
 		this.addHierarchyListener(new SWPanelHierarchyListener(renderContext));
+		this.setFocusable(true);
 	}
 	
 	/**

@@ -25,4 +25,10 @@ public interface RenderContext {
 	 */
 	Texture makeTexture();
 
+	/**
+	 * Make a vertex data sturcture.
+	 * 
+	 * @return the vertex data
+	 */
+	VertexData makeVertexData(int n);
 }

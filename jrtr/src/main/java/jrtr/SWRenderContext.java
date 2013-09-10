@@ -94,4 +94,9 @@ public class SWRenderContext implements RenderContext {
 	{
 		return new SWTexture();
 	}
+	
+	public VertexData makeVertexData(int n)
+	{
+		return new SWVertexData(n);		
+	}
 }
