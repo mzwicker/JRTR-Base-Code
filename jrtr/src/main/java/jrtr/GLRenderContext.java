@@ -281,7 +281,7 @@ public class GLRenderContext implements RenderContext {
 			int id;
 			
 			// Activate the shader
-			useDefaultShader();
+			useShader(m.shader);
 			
 			// Activate the texture, if the material has one
 			if(m.texture != null) {
@@ -296,31 +296,40 @@ public class GLRenderContext implements RenderContext {
 				gl.glUniform1i(id, 0);	// The variable in the shader needs to be set to the desired texture unit, i.e., 0
 			}
 			
-			// Pass light source information to shader, iterate over all light sources
+			// Pass a default light source to shader
+			String lightString = "lightDirection[" + 0 + "]";			
+			id = gl.glGetUniformLocation(activeShaderID, lightString);
+			if(id!=-1)
+				gl.glUniform4f(id, 0, 0, 1, 0.f);		// Set light direction
+			else
+				System.out.print("Could not get location of uniform variable " + lightString + "\n");
+			int nLights = 1;
+			
+			// Iterate over all light sources in scene manager (overwriting the default light source)
 			Iterator<Light> iter = sceneManager.lightIterator();			
-			int i=0;
+			
 			Light l;
 			if(iter != null) {
-				
-				while(iter.hasNext() && i<8)
+				nLights = 0;
+				while(iter.hasNext() && nLights<8)
 				{
 					l = iter.next(); 
 					
 					// Pass light direction to shader, we assume the shader stores it in an array "lightDirection[]"
-					String lightString = "lightDirection[" + i + "]";			
+					lightString = "lightDirection[" + nLights + "]";			
 					id = gl.glGetUniformLocation(activeShaderID, lightString);
 					if(id!=-1)
 						gl.glUniform4f(id, l.direction.x, l.direction.y, l.direction.z, 0.f);		// Set light direction
 					else
 						System.out.print("Could not get location of uniform variable " + lightString + "\n");
 					
-					i++;
+					nLights++;
 				}
 				
 				// Pass number of lights to shader, we assume this is in a variable "nLights" in the shader
 				id = gl.glGetUniformLocation(activeShaderID, "nLights");
 				if(id!=-1)
-					gl.glUniform1i(id, i);		// Set number of lightrs
+					gl.glUniform1i(id, nLights);		// Set number of lightrs
 				else
 					System.out.print("Could not get location of uniform variable nLights\n");
 			}

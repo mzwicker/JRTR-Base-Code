@@ -1,7 +1,6 @@
 import jrtr.*;
 import javax.swing.*;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import javax.vecmath.*;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -14,9 +13,12 @@ public class simple
 {	
 	static RenderPanel renderPanel;
 	static RenderContext renderContext;
+	static Shader normalShader;
+	static Shader diffuseShader;
+	static Material material;
 	static SimpleSceneManager sceneManager;
 	static Shape shape;
-	static float angle;
+	static float currentstep, basicstep;
 
 	/**
 	 * An extension of {@link GLRenderPanel} or {@link SWRenderPanel} to 
@@ -43,6 +45,22 @@ public class simple
 						 1,1,1, 1,1,-1, -1,1,-1, -1,1,1,		// top face
 						-1,-1,1, -1,-1,-1, 1,-1,-1, 1,-1,1};	// bottom face
 
+			// The vertex normals of the cube
+			float n[] = {0,0,1, 0,0,1, 0,0,1, 0,0,1,			// front face
+				         -1,0,0, -1,0,0, -1,0,0, -1,0,0,		// left face
+					  	 0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1,		// back face
+						 1,0,0, 1,0,0, 1,0,0, 1,0,0,			// right face
+						 0,1,0, 0,1,0, 0,1,0, 0,1,0,			// top face
+						 0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0};		// bottom face
+			
+			// Vertex coordinates for the cube
+			float uv[] = {0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1};
+
 			// The vertex colors
 			float c[] = {1,0,0, 1,0,0, 1,0,0, 1,0,0,
 					     0,1,0, 0,1,0, 0,1,0, 0,1,0,
@@ -56,6 +74,8 @@ public class simple
 			VertexData vertexData = renderContext.makeVertexData(24);
 			vertexData.addElement(c, VertexData.Semantic.COLOR, 3);
 			vertexData.addElement(v, VertexData.Semantic.POSITION, 3);
+			vertexData.addElement(n, VertexData.Semantic.NORMAL, 3);
+			vertexData.addElement(uv, VertexData.Semantic.TEXCOORD, 2);
 			
 			// The triangles (three vertex indices for each triangle)
 			int indices[] = {0,2,3, 0,1,2,			// front face
@@ -74,10 +94,39 @@ public class simple
 
 			// Add the scene to the renderer
 			renderContext.setSceneManager(sceneManager);
+			
+			// Load some more shaders
+		    normalShader = renderContext.makeShader();
+		    try {
+		    	normalShader.load("..\\jrtr\\shaders\\normal.vert", "..\\jrtr\\shaders\\normal.frag");
+		    } catch(Exception e) {
+		    	System.out.print("Problem with shader:\n");
+		    	System.out.print(e.getMessage());
+		    }
 	
+		    diffuseShader = renderContext.makeShader();
+		    try {
+		    	diffuseShader.load("..\\jrtr\\shaders\\diffuse.vert", "..\\jrtr\\shaders\\diffuse.frag");
+		    } catch(Exception e) {
+		    	System.out.print("Problem with shader:\n");
+		    	System.out.print(e.getMessage());
+		    }
+
+		    // Make a material that can be used for shading
+			material = new Material();
+			material.shader = diffuseShader;
+			material.texture = renderContext.makeTexture();
+			try {
+				material.texture.load("..\\textures\\plant.jpg");
+			} catch(Exception e) {				
+				System.out.print("Could not load texture.\n");
+				System.out.print(e.getMessage());
+			}
+
 			// Register a timer task
 		    Timer timer = new Timer();
-		    angle = 0.01f;
+		    basicstep = 0.01f;
+		    currentstep = basicstep;
 		    timer.scheduleAtFixedRate(new AnimationTask(), 0, 10);
 		}
 	}
@@ -90,12 +139,12 @@ public class simple
 	{
 		public void run()
 		{
-			// Update transformation
+			// Update transformation by rotating with angle "currentstep"
     		Matrix4f t = shape.getTransformation();
     		Matrix4f rotX = new Matrix4f();
-    		rotX.rotX(angle);
+    		rotX.rotX(currentstep);
     		Matrix4f rotY = new Matrix4f();
-    		rotY.rotY(angle);
+    		rotY.rotY(currentstep);
     		t.mul(rotX);
     		t.mul(rotY);
     		shape.setTransformation(t);
@@ -119,6 +168,74 @@ public class simple
 	}
 	
 	/**
+	 * A key listener for the main window. Us this to process key events.
+	 */
+	public static class SimpleKeyListener implements KeyListener
+	{
+		public void keyPressed(KeyEvent e)
+		{
+			switch(e.getKeyChar())
+			{
+				case 's': {
+					// Stop animation
+					currentstep = 0;
+					break;
+				}
+				case 'p': {
+					// Resume animation
+					currentstep = basicstep;
+					break;
+				}
+				case '+': {
+					// Accelerate roation
+					currentstep += basicstep;
+					break;
+				}
+				case '-': {
+					// Slow down rotation
+					currentstep -= basicstep;
+					break;
+				}
+				case 'n': {
+					// Remove material from shape, and set "normal" shader
+					shape.setMaterial(null);
+					renderContext.useShader(normalShader);
+					break;
+				}
+				case 'd': {
+					// Remove material from shape, and set "normal" shader
+					shape.setMaterial(null);
+					renderContext.useDefaultShader();
+					break;
+				}
+				case 'm': {
+					// Set a material for more complex shading of the shape
+					if(shape.getMaterial() == null) {
+						shape.setMaterial(material);
+					} else
+					{
+						shape.setMaterial(null);
+						renderContext.useDefaultShader();
+					}
+					break;
+				}
+			}
+			
+			// Trigger redrawing
+			renderPanel.getCanvas().repaint();
+		}
+		
+		public void keyReleased(KeyEvent e)
+		{
+		}
+
+		public void keyTyped(KeyEvent e)
+        {
+        }
+
+	}
+	
+	/**
 	 * The main function opens a 3D rendering window, constructs a simple 3D
 	 * scene, and starts a timer task to generate an animation.
 	 */
@@ -134,9 +251,11 @@ public class simple
 		jframe.setLocationRelativeTo(null); // center of screen
 		jframe.getContentPane().add(renderPanel.getCanvas());// put the canvas into a JFrame window
 
-		// Add a mouse listener
+		// Add a mouse and key listener
 	    renderPanel.getCanvas().addMouseListener(new SimpleMouseListener());
-		   	    	    
+	    renderPanel.getCanvas().addKeyListener(new SimpleKeyListener());
+		renderPanel.getCanvas().setFocusable(true);   	    	    
+	    
 	    jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 	    jframe.setVisible(true); // show window
 	}
