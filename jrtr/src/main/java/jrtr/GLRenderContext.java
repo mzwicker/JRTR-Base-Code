@@ -2,7 +2,7 @@ package jrtr;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
-import java.util.ListIterator;
+import java.util.*;
 
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
@@ -19,15 +19,13 @@ public class GLRenderContext implements RenderContext {
 	private GL3 gl;
 
 	/**
-	 * The default shader for this render context, will be used for items that
-	 * do not have their own shader.
+	 * The default shader for this render context.
 	 */
 	private GLShader defaultShader;
 
 	/**
-	 * The id of the currently active shader (you should always
-	 * useuseShader(GLShader) and useDefaultShader() to switch between the
-	 * shaders!).
+	 * The id of the currently active shader. Call useShader(Shader) and 
+	 * useDefaultShader() to switch between shaders.
 	 */
 	private int activeShaderID;
 
@@ -39,12 +37,13 @@ public class GLRenderContext implements RenderContext {
 	 *            this object.
 	 */
 	public GLRenderContext(GLAutoDrawable drawable) {
+		
+		// Some OpenGL initialization
 		gl = drawable.getGL().getGL3();
 		gl.glEnable(GL3.GL_DEPTH_TEST);
 		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
-		// Load and use default shader, will be used for items that do not have
-		// their own shader.
+		// Load and use the default shader
 		defaultShader = (GLShader) makeShader();
 		try {
 			defaultShader.load("../jrtr/shaders/default.vert", "../jrtr/shaders/default.frag");
@@ -70,10 +69,14 @@ public class GLRenderContext implements RenderContext {
 	 * to the rendering method.
 	 */
 	public void display(GLAutoDrawable drawable) {
+		
+		// Get reference to the OpenGL rendering context
 		gl = drawable.getGL().getGL3();
 
+		// Do some processing at the beginning of the frame
 		beginFrame();
 
+		// Traverse scene manager and draw everything
 		SceneManagerIterator iterator = sceneManager.iterator();
 		while (iterator.hasNext()) {
 			RenderItem r = iterator.next();
@@ -82,6 +85,7 @@ public class GLRenderContext implements RenderContext {
 			}
 		}
 
+		// Do some processing at the end of the frame
 		endFrame();
 	}
 
@@ -90,8 +94,10 @@ public class GLRenderContext implements RenderContext {
 	 * drawing starts.
 	 */
 	private void beginFrame() {
-		setLights();
-
+		// Set the active shader as default for this frame
+		gl.glUseProgram(activeShaderID);
+		
+		// Clear color and depth buffer for the new frame
 		gl.glClear(GL3.GL_COLOR_BUFFER_BIT);
 		gl.glClear(GL3.GL_DEPTH_BUFFER_BIT);
 	}
@@ -101,6 +107,7 @@ public class GLRenderContext implements RenderContext {
 	 * is complete.
 	 */
 	private void endFrame() {
+		// Flush the OpenGL pipeline
 		gl.glFlush();
 	}
 
@@ -111,14 +118,20 @@ public class GLRenderContext implements RenderContext {
 	 *            the object that needs to be drawn
 	 */
 	private void draw(RenderItem renderItem) {
+		
+		// Set the material of the shape to be rendered
 		setMaterial(renderItem.getShape().getMaterial());
-
+		
+		// Get reference to the vertex data of the render item to be rendered
 		GLVertexData vertexData = (GLVertexData) renderItem.getShape()
 				.getVertexData();
 
-		// In the first pass the object has to be given to the buffer (on the
-		// GPU) and the renderItem has to store the handle, so we do not have to
-		// send the object to the GPU in each pass.
+		// Check if the vertex data has been uploaded to OpenGL via a
+		// "vertex array object" (VAO). The VAO will store the vertex data
+		// in several "vertex buffer objects" (VBOs) on the GPU. We do this
+		// only once for performance reasons. Once the data is in the VBOs
+		// asscociated with a VAO, it is stored on the GPU and rendered more 
+		// efficiently.
 		if (vertexData.getVAO() == null) {
 			initArrayBuffer(vertexData);
 		}
@@ -127,36 +140,26 @@ public class GLRenderContext implements RenderContext {
 		// every step, since they usually have changed)
 		setTransformation(renderItem.getT());
 
-		// bind the VAO of this shape (all the vertex data are already on the
-		// GPU, we do not have to send them again)
+		// Bind the VAO of this shape. This activates the VBOs that we 
+		// associated with the VAO. We already loaded the vertex data into the
+		// VBOs on the GPU, so we do not have to send them again.
 		vertexData.getVAO().bind();
-
-		// Render the vertex buffer objects
-		gl.glDrawElements(GL3.GL_TRIANGLES, renderItem.getShape()
-				.getVertexData().getIndices().length, GL3.GL_UNSIGNED_INT, 0);
-
-		// we are done with this shape, bind the default vertex array
-		gl.glBindVertexArray(0);
-
-		cleanMaterial(renderItem.getShape().getMaterial());
-	}
-
-	private void initArrayBuffer(GLVertexData data) {
-		// Make a vertex array object (VAO) for this shape
-		data.setVAO(new GLVertexArrayObject(gl, data.getElements().size() + 1));
-
-		// Store all vertex attributes in the buffers
-		ListIterator<VertexData.VertexElement> itr = data.getElements()
+		
+		// Try to connect the vertex buffers to the corresponding variables 
+		// in the current vertex shader.
+		// Note: This is not part of the vertex array object, because the active
+		// shader may have changed since the vertex array object was initialized. 
+		// We need to make sure the vertex buffers are connected to the right
+		// variables in the shader
+		ListIterator<VertexData.VertexElement> itr = vertexData.getElements()
 				.listIterator(0);
+		vertexData.getVAO().rewindVBO();
 		while (itr.hasNext()) {
 			VertexData.VertexElement e = itr.next();
 			int dim = e.getNumberOfComponents();
 
 			// Bind the next vertex buffer object
-			gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, data.getVAO().getNextVBO());
-			// Upload vertex data
-			gl.glBufferData(GL3.GL_ARRAY_BUFFER, e.getData().length * 4,
-					FloatBuffer.wrap(e.getData()), GL3.GL_DYNAMIC_DRAW);
+			gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, vertexData.getVAO().getNextVBO());
 
 			// Tell OpenGL which "in" variable in the vertex shader corresponds
 			// to the current vertex buffer object.
@@ -186,17 +189,63 @@ public class GLRenderContext implements RenderContext {
 			gl.glEnableVertexAttribArray(attribIndex);
 		}
 
-		// bind the default vertex buffer objects
+		// Render the vertex buffer objects
+		gl.glDrawElements(GL3.GL_TRIANGLES, renderItem.getShape()
+				.getVertexData().getIndices().length, GL3.GL_UNSIGNED_INT, 0);
+
+		// We are done with this shape, bind the default vertex array
+		gl.glBindVertexArray(0);
+
+		cleanMaterial(renderItem.getShape().getMaterial());
+	}
+	
+	/**
+	 * A utility method to load vertex data into an OpenGL "vertex array object"
+	 * (VAO) for efficient rendering. The VAO stores several "vertex buffer objects"
+	 * (VBOs) that contain the vertex attribute data.
+	 *  
+	 * @param data
+	 * 			reference to the vertex data to be loaded into a VAO
+	 */
+	private void initArrayBuffer(GLVertexData data) {
+		
+		// Make a vertex array object (VAO) for this vertex data
+		// and store a reference to it
+		GLVertexArrayObject vao = new GLVertexArrayObject(gl, data.getElements().size() + 1);
+		data.setVAO(vao);
+		
+		// Bind (activate) the VAO for the vertex data in OpenGL.
+		// The subsequent OpenGL operations on VBOs will be recorded (stored)
+		// in the VAO.
+		vao.bind();
+
+		// Store all vertex attributes in vertex buffer objects (VBOs)
+		ListIterator<VertexData.VertexElement> itr = data.getElements()
+				.listIterator(0);
+		data.getVAO().rewindVBO();
+		while (itr.hasNext()) {
+			VertexData.VertexElement e = itr.next();
+
+			// Bind the vertex buffer object (VBO)
+			gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, data.getVAO().getNextVBO());
+			// Upload vertex data
+			gl.glBufferData(GL3.GL_ARRAY_BUFFER, e.getData().length * 4,
+					FloatBuffer.wrap(e.getData()), GL3.GL_DYNAMIC_DRAW);
+
+		}
+
+		// Bind the default vertex buffer objects
 		gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
 
-		// store the indices into the last buffer
+		// Store the vertex data indices into the last vertex buffer
 		gl.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, data.getVAO().getNextVBO());
 		gl.glBufferData(GL3.GL_ELEMENT_ARRAY_BUFFER,
 				data.getIndices().length * 4,
 				IntBuffer.wrap(data.getIndices()), GL3.GL_DYNAMIC_DRAW);
 
-		// bind the default vertex array object
-		gl.glBindVertexArray(0);
+		// Bind the default vertex array object. This "deactivates" the VAO
+		// of the vertex data
+		gl.glBindVertexArray(0);		
 	}
 
 	private void setTransformation(Matrix4f transformation) {
@@ -217,21 +266,65 @@ public class GLRenderContext implements RenderContext {
 	}
 
 	/**
-	 * Pass the light properties to OpenGL. This assumes the list of lights in
-	 * the scene manager is accessible via a method Iterator<Light>
-	 * lightIterator().
+	 * Set up a material for rendering. Activate its shader, and pass the 
+	 * material properties, textures, and light sources to the shader.
 	 * 
-	 * To be implemented in the "Textures and Shading" project.
-	 */
-	private void setLights() {
-	}
-
-	/**
-	 * Pass the material properties to OpenGL, including textures and shaders.
-	 * 
-	 * To be implemented in the "Textures and Shading" project.
+	 * @param m
+	 * 		the material to be set up for rendering
 	 */
 	private void setMaterial(Material m) {
+		
+		// Set up the shader for the material, if it has one
+		if(m != null && m.shader != null) {
+			
+			// Identifier for shader variables
+			int id;
+			
+			// Activate the shader
+			useDefaultShader();
+			
+			// Activate the texture, if the material has one
+			if(m.texture != null) {
+				// OpenGL calls to activate the texture 
+				gl.glActiveTexture(GL3.GL_TEXTURE0);	// Work with texture unit 0
+				gl.glEnable(GL3.GL_TEXTURE_2D);
+				gl.glBindTexture(GL3.GL_TEXTURE_2D, ((GLTexture)m.texture).getId());
+				gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_LINEAR);
+				gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_LINEAR);
+				// We assume the texture in the shader is called "myTexture"
+				id = gl.glGetUniformLocation(activeShaderID, "myTexture");
+				gl.glUniform1i(id, 0);	// The variable in the shader needs to be set to the desired texture unit, i.e., 0
+			}
+			
+			// Pass light source information to shader, iterate over all light sources
+			Iterator<Light> iter = sceneManager.lightIterator();			
+			int i=0;
+			Light l;
+			if(iter != null) {
+				
+				while(iter.hasNext() && i<8)
+				{
+					l = iter.next(); 
+					
+					// Pass light direction to shader, we assume the shader stores it in an array "lightDirection[]"
+					String lightString = "lightDirection[" + i + "]";			
+					id = gl.glGetUniformLocation(activeShaderID, lightString);
+					if(id!=-1)
+						gl.glUniform4f(id, l.direction.x, l.direction.y, l.direction.z, 0.f);		// Set light direction
+					else
+						System.out.print("Could not get location of uniform variable " + lightString + "\n");
+					
+					i++;
+				}
+				
+				// Pass number of lights to shader, we assume this is in a variable "nLights" in the shader
+				id = gl.glGetUniformLocation(activeShaderID, "nLights");
+				if(id!=-1)
+					gl.glUniform1i(id, i);		// Set number of lightrs
+				else
+					System.out.print("Could not get location of uniform variable nLights\n");
+			}
+		}
 	}
 
 	/**
@@ -242,14 +335,24 @@ public class GLRenderContext implements RenderContext {
 	private void cleanMaterial(Material m) {
 	}
 
-	private void useShader(GLShader s) {
+	/**
+	 * Activate and use a given shader.
+	 * 
+	 * @param s
+	 * 		the shader to be activated
+	 */
+	public void useShader(Shader s) {
 		if (s != null) {
-			activeShaderID = s.programId();
-			s.use();
+			activeShaderID = ((GLShader)s).programId();
+			gl.glUseProgram(activeShaderID);
 		}
 	}
 
-	private void useDefaultShader() {
+	/**
+	 * Activate the default shader.
+	 * 
+	 */
+	public void useDefaultShader() {
 		useShader(defaultShader);
 	}
 

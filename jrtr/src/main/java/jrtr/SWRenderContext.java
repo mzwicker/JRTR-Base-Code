@@ -86,6 +86,20 @@ public class SWRenderContext implements RenderContext {
 	{
 		return new SWShader();
 	}
+	
+	/**
+	 * Does nothing. We will not implement shaders for the software renderer.
+	 */
+	public void useShader(Shader s)
+	{
+	}
+	
+	/**
+	 * Does nothing. We will not implement shaders for the software renderer.
+	 */
+	public void useDefaultShader()
+	{
+	}
 
 	/**
 	 * Does nothing. We will not implement textures for the software renderer.

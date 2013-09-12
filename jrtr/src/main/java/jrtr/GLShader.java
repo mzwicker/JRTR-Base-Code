@@ -70,12 +70,10 @@ public class GLShader implements Shader {
 	{	
 		int v,f;
 		
-		v = gl.glCreateShader(GL3.GL_VERTEX_SHADER);
-		f = gl.glCreateShader(GL3.GL_FRAGMENT_SHADER);
-
 		String vsrc[] = new String[1];
 		String fsrc[] = new String[1];
 		
+		// Read shader programs from file
 		BufferedReader brv = new BufferedReader(new FileReader(vertexFileName));
 		vsrc[0]= "";
 		String line;
@@ -89,32 +87,40 @@ public class GLShader implements Shader {
 		  fsrc[0] += line + "\n";
 		}
 		
+		// Close file readers
+		brv.close();
+		brf.close();
+
+		// Make (compile and link) OpenGL shaders
+		v = gl.glCreateShader(GL3.GL_VERTEX_SHADER);
+		f = gl.glCreateShader(GL3.GL_FRAGMENT_SHADER);
+		
 		gl.glShaderSource(v, 1, vsrc, (int[])null, 0);
 		gl.glCompileShader(v);
 
-		System.out.println("Vertex shader output:\n" + this.getCompilerOutputShader(v));
+		System.out.println("Vertex shader output for " + vertexFileName + ":\n" + this.getCompilerOutputShader(v));
 		
 		gl.glShaderSource(f, 1, fsrc, (int[])null, 0);
 		gl.glCompileShader(f);
 
-		System.out.println("Fragment shader output:\n" + this.getCompilerOutputShader(f));
+		System.out.println("Fragment shader output for " + fragmentFileName + ":\n" + this.getCompilerOutputShader(f));
 		
 		p = gl.glCreateProgram();
 		gl.glAttachShader(p, v);
 		gl.glAttachShader(p, f);
 		gl.glLinkProgram(p);
-		//gl.glValidateProgram(p); //returns error when no texture stage bound
 		
 		System.out.println("Linker output:\n" + this.getLinkerOutput(p));
 		
+		// Report errors
 		int[] status = new int[1];
 		gl.glGetShaderiv(v, GL3.GL_COMPILE_STATUS, status, 0);
 		if(status[0] == GL3.GL_FALSE) {
-			throw new Exception("Could not compile vertex shader.");
+			throw new Exception("Could not compile vertex shader " + vertexFileName + ".");
 		}
 		gl.glGetShaderiv(f, GL3.GL_COMPILE_STATUS, status, 0);
 		if(status[0] == GL3.GL_FALSE) {
-			throw new Exception("Could not compile fragment shader.");
+			throw new Exception("Could not compile fragment shader " + fragmentFileName + ".");
 		}
 		
 		IntBuffer ib = ByteBuffer.allocateDirect(4).order(ByteOrder.nativeOrder()).asIntBuffer();
@@ -124,26 +130,7 @@ public class GLShader implements Shader {
 			throw new Exception("Could not link vertex and fragment shader.");
 		}
 	}
-	
-	/**
-	 * Activate the shader program. As long as the shader is active, the vertex
-	 * shader is executed for each vertex, and the fragment shader for each pixel
-	 * that is rendered.
-	 */
-	public void use()
-	{
-		gl.glUseProgram(p);
-	}
-
-	/**
-	 * Disable the shader and go back to using OpenGL standard functionality
-	 * to process vertices and fragments/pixels.
-	 */
-	public void disable()
-	{
-		gl.glUseProgram(0);
-	}
-	
+		
 	public int programId()
 	{
 		return p;		

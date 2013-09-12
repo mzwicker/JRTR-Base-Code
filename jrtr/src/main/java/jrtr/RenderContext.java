@@ -19,6 +19,16 @@ public interface RenderContext {
 	Shader makeShader();
 	
 	/**
+	 * Use the default shader.
+	 */
+	void useDefaultShader();
+	
+	/**
+	 * Use a shader.
+	 */
+	void useShader(Shader s);
+	
+	/**
 	 * Make a texture.
 	 * 
 	 * @return the texture

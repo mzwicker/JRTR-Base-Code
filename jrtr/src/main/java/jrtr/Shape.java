@@ -8,8 +8,12 @@ import javax.vecmath.*;
  */
 public class Shape {
 
+	private Material material;
+	
 	/**
-	 * Make a shape from {@link VertexData}.
+	 * Make a shape from {@link VertexData}. A shape contains the geometry 
+	 * (the {@link VertexData}), and material properties for shading.
+	 *  
 	 *  
 	 * @param vertexData the vertices of the shape.
 	 */
@@ -18,6 +22,8 @@ public class Shape {
 		this.vertexData = vertexData;
 		t = new Matrix4f();
 		t.setIdentity();
+		
+		material = null;
 	}
 	
 	public VertexData getVertexData()
@@ -36,10 +42,14 @@ public class Shape {
 	}
 	
 	/**
-	 * To be implemented in the "Textures and Shading" project.
+	 * Set a reference to a material for this shape.
+	 * 
+	 * @param material
+	 * 		the material to be referenced from this shape
 	 */
 	public void setMaterial(Material material)
 	{
+		this.material = material;
 	}
 
 	/**
@@ -47,7 +57,7 @@ public class Shape {
 	 */
 	public Material getMaterial()
 	{
-		return null;
+		return material;
 	}
 
 	private VertexData vertexData;

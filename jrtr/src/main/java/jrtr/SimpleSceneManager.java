@@ -5,17 +5,19 @@ import java.util.ListIterator;
 import java.util.Iterator;
 
 /**
- * A simple scene manager that stores objects in a linked list.
+ * A simple scene manager that stores objects and lights in linked lists.
  */
 public class SimpleSceneManager implements SceneManagerInterface {
 
 	private LinkedList<Shape> shapes;
+	private LinkedList<Light> lights;
 	private Camera camera;
 	private Frustum frustum;
 	
 	public SimpleSceneManager()
 	{
 		shapes = new LinkedList<Shape>();
+		lights = new LinkedList<Light>();
 		camera = new Camera();
 		frustum = new Frustum();
 	}
@@ -35,19 +37,21 @@ public class SimpleSceneManager implements SceneManagerInterface {
 		shapes.add(shape);
 	}
 	
+	public void addLight(Light light)
+	{
+		lights.add(light);
+	}
+	
+	public Iterator<Light> lightIterator()
+	{
+		return lights.iterator();
+	}
+	
 	public SceneManagerIterator iterator()
 	{
 		return new SimpleSceneManagerItr(this);
 	}
 	
-	/**
-	 * To be implemented in the "Textures and Shading" project.
-	 */
-	public Iterator<Light> lightIterator()
-	{
-		return null;
-	}
-
 	private class SimpleSceneManagerItr implements SceneManagerIterator {
 		
 		public SimpleSceneManagerItr(SimpleSceneManager sceneManager)
@@ -72,4 +76,5 @@ public class SimpleSceneManager implements SceneManagerInterface {
 		
 		ListIterator<Shape> itr;
 	}
+	
 }
