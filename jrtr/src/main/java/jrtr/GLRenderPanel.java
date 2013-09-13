@@ -6,7 +6,7 @@ import javax.media.opengl.awt.GLCanvas;
 import java.awt.Component;
 
 /**
- * An implementation of the {@link RenderPanel} interface using
+ * Implementats the {@link RenderPanel} interface using
  * OpenGL. Its purpose is to provide an AWT component that displays
  * the rendered image. The class {@link GLRenderContext} performs the actual
  * rendering. The user needs to extend this class and provide an 

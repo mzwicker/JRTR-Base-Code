@@ -10,7 +10,7 @@ import javax.vecmath.*;
 
 
 /**
- * This class implements a {@link RenderContext} (a renderer) using OpenGL
+ * Implements a {@link RenderContext} (a renderer) using OpenGL
  * version 3 (or later).
  */
 public class GLRenderContext implements RenderContext {
@@ -330,8 +330,9 @@ public class GLRenderContext implements RenderContext {
 				id = gl.glGetUniformLocation(activeShaderID, "nLights");
 				if(id!=-1)
 					gl.glUniform1i(id, nLights);		// Set number of lightrs
-				else
-					System.out.print("Could not get location of uniform variable nLights\n");
+// Only for debugging				
+//				else
+//					System.out.print("Could not get location of uniform variable nLights\n");
 			}
 		}
 	}

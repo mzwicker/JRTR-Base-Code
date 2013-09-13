@@ -1,3 +1,5 @@
+package simple;
+
 import jrtr.*;
 import javax.swing.*;
 import java.awt.event.*;
@@ -22,7 +24,8 @@ public class simple
 
 	/**
 	 * An extension of {@link GLRenderPanel} or {@link SWRenderPanel} to 
-	 * provide a call-back function for initialization. 
+	 * provide a call-back function for initialization. Here we construct
+	 * a simple 3D scene and start a timer task to generate an animation.
 	 */ 
 	public final static class SimpleRenderPanel extends GLRenderPanel
 	{
@@ -45,21 +48,13 @@ public class simple
 						 1,1,1, 1,1,-1, -1,1,-1, -1,1,1,		// top face
 						-1,-1,1, -1,-1,-1, 1,-1,-1, 1,-1,1};	// bottom face
 
-			// The vertex normals of the cube
+			// The vertex normals 
 			float n[] = {0,0,1, 0,0,1, 0,0,1, 0,0,1,			// front face
 				         -1,0,0, -1,0,0, -1,0,0, -1,0,0,		// left face
 					  	 0,0,-1, 0,0,-1, 0,0,-1, 0,0,-1,		// back face
 						 1,0,0, 1,0,0, 1,0,0, 1,0,0,			// right face
 						 0,1,0, 0,1,0, 0,1,0, 0,1,0,			// top face
 						 0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0};		// bottom face
-			
-			// Vertex coordinates for the cube
-			float uv[] = {0,0, 1,0, 1,1, 0,1,
-					  0,0, 1,0, 1,1, 0,1,
-					  0,0, 1,0, 1,1, 0,1,
-					  0,0, 1,0, 1,1, 0,1,
-					  0,0, 1,0, 1,1, 0,1,
-					  0,0, 1,0, 1,1, 0,1};
 
 			// The vertex colors
 			float c[] = {1,0,0, 1,0,0, 1,0,0, 1,0,0,
@@ -68,6 +63,14 @@ public class simple
 						 0,1,0, 0,1,0, 0,1,0, 0,1,0,
 						 0,0,1, 0,0,1, 0,0,1, 0,0,1,
 						 0,0,1, 0,0,1, 0,0,1, 0,0,1};
+
+			// Texture coordinates 
+			float uv[] = {0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1,
+					  0,0, 1,0, 1,1, 0,1};
 
 			// Construct a data structure that stores the vertices, their
 			// attributes, and the triangle mesh connectivity
@@ -86,7 +89,7 @@ public class simple
 							 20,22,23, 20,21,22};	// bottom face
 
 			vertexData.addIndices(indices);
-					
+								
 			// Make a scene manager and add the object
 			sceneManager = new SimpleSceneManager();
 			shape = new Shape(vertexData);
@@ -168,7 +171,15 @@ public class simple
 	}
 	
 	/**
-	 * A key listener for the main window. Us this to process key events.
+	 * A key listener for the main window. Use this to process key events.
+	 * Currently this provides the following controls:
+	 * 's': stop animation
+	 * 'p': play animation
+	 * '+': accelerate rotation
+	 * '-': slow down rotation
+	 * 'd': default shader
+	 * 'n': shader using surface normals
+	 * 'm': use a material for shading
 	 */
 	public static class SimpleKeyListener implements KeyListener
 	{
@@ -203,7 +214,7 @@ public class simple
 					break;
 				}
 				case 'd': {
-					// Remove material from shape, and set "normal" shader
+					// Remove material from shape, and set "default" shader
 					shape.setMaterial(null);
 					renderContext.useDefaultShader();
 					break;
@@ -236,8 +247,10 @@ public class simple
 	}
 	
 	/**
-	 * The main function opens a 3D rendering window, constructs a simple 3D
-	 * scene, and starts a timer task to generate an animation.
+	 * The main function opens a 3D rendering window, implemented by the class
+	 * {@link SimpleRenderPanel}. {@link SimpleRenderPanel} is then called backed 
+	 * for initialization automatically. It then constructs a simple 3D scene, 
+	 * and starts a timer task to generate an animation.
 	 */
 	public static void main(String[] args)
 	{		

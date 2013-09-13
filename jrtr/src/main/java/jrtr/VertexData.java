@@ -9,7 +9,7 @@ import java.util.LinkedList;
  * 
  * It is an abstract class, use the implementation {@link GLVertexData} or
  * {@link SWVertexData} which should be instantiated via {@link
- * RenderContext.makeVertexData(int)}.
+ * RenderContext#makeVertexData(int)}.
  */
 public abstract class VertexData {
 
