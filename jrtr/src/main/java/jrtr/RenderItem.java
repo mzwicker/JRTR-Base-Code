@@ -3,7 +3,8 @@ package jrtr;
 import javax.vecmath.*;
 
 /**
- * A data structure that contains a shape and its transformation.
+ * A data structure that contains a reference to a 3D object 
+ * of class {@label Shape} and its transformation {@link Matrix4f}.
  * Its purpose is to pass data from the scene manager to the 
  * renderer via the {@link SceneManagerIterator}.
  */

@@ -2,17 +2,20 @@ package jrtr;
 import javax.vecmath.*;
 
 /**
- * Represents a 3D shape. The shape currently just consists
- * of its vertex data. It should later be extended to include
- * material properties, shaders, etc.
+ * Represents a 3D object. The shape references its geometry, 
+ * that is, a triangle mesh stored in a {@link VertexData} 
+ * object, its {@link Material}, and a transformation {@link Matrix4f}.
  */
 public class Shape {
 
 	private Material material;
+	private VertexData vertexData;
+	private Matrix4f t;
 	
 	/**
 	 * Make a shape from {@link VertexData}. A shape contains the geometry 
-	 * (the {@link VertexData}), and material properties for shading.
+	 * (the {@link VertexData}), material properties for shading (a 
+	 * refernce to a {@link Material}), and a transformation {@link Matrix4f}.
 	 *  
 	 *  
 	 * @param vertexData the vertices of the shape.
@@ -60,6 +63,4 @@ public class Shape {
 		return material;
 	}
 
-	private VertexData vertexData;
-	private Matrix4f t;
 }
