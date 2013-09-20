@@ -101,7 +101,7 @@ public class simple
 			// Load some more shaders
 		    normalShader = renderContext.makeShader();
 		    try {
-		    	normalShader.load("..\\jrtr\\shaders\\normal.vert", "..\\jrtr\\shaders\\normal.frag");
+		    	normalShader.load("../jrtr/shaders/normal.vert", "../jrtr/shaders/normal.frag");
 		    } catch(Exception e) {
 		    	System.out.print("Problem with shader:\n");
 		    	System.out.print(e.getMessage());
@@ -109,7 +109,7 @@ public class simple
 	
 		    diffuseShader = renderContext.makeShader();
 		    try {
-		    	diffuseShader.load("..\\jrtr\\shaders\\diffuse.vert", "..\\jrtr\\shaders\\diffuse.frag");
+		    	diffuseShader.load("../jrtr/shaders/diffuse.vert", "../jrtr/shaders/diffuse.frag");
 		    } catch(Exception e) {
 		    	System.out.print("Problem with shader:\n");
 		    	System.out.print(e.getMessage());
@@ -120,7 +120,7 @@ public class simple
 			material.shader = diffuseShader;
 			material.texture = renderContext.makeTexture();
 			try {
-				material.texture.load("..\\textures\\plant.jpg");
+				material.texture.load("../textures/plant.jpg");
 			} catch(Exception e) {				
 				System.out.print("Could not load texture.\n");
 				System.out.print(e.getMessage());
