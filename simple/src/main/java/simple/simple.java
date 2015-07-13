@@ -1,6 +1,8 @@
 package simple;
 
 import jrtr.*;
+import jrtr.glrenderer.GLRenderPanel;
+
 import javax.swing.*;
 import java.awt.event.*;
 import javax.vecmath.*;

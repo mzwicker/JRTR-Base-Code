@@ -8,6 +8,7 @@ import javax.vecmath.*;
 public class Material {
 
 	// Material properties
+	public Texture diffuseMap, normalMap, specularMap, ambientMap, alphaMap;
 	public Vector3f diffuse;
 	public Vector3f specular;
 	public Vector3f ambient;

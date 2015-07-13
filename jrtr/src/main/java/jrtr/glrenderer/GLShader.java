@@ -16,7 +16,7 @@ import jrtr.Shader;
 public class GLShader implements Shader {
 	
 	private GL3 gl;	// The OpenGL context
-	private int p;	// The shader identifier
+	private int p, vertexHandle, fragmentHandle;	// The shader identifier
 	
 	public GLShader(GL3 gl)
 	{
@@ -69,9 +69,7 @@ public class GLShader implements Shader {
 	 * Load the vertex and fragment shader programs from a file.
 	 */
 	public void load(String vertexFileName, String fragmentFileName) throws Exception	
-	{	
-		int v,f;
-		
+	{			
 		String vsrc[] = new String[1];
 		String fsrc[] = new String[1];
 		
@@ -94,33 +92,33 @@ public class GLShader implements Shader {
 		brf.close();
 
 		// Make (compile and link) OpenGL shaders
-		v = gl.glCreateShader(GL3.GL_VERTEX_SHADER);
-		f = gl.glCreateShader(GL3.GL_FRAGMENT_SHADER);
+		vertexHandle = gl.glCreateShader(GL3.GL_VERTEX_SHADER);
+		fragmentHandle = gl.glCreateShader(GL3.GL_FRAGMENT_SHADER);
 		
-		gl.glShaderSource(v, 1, vsrc, (int[])null, 0);
-		gl.glCompileShader(v);
+		gl.glShaderSource(vertexHandle, 1, vsrc, (int[])null, 0);
+		gl.glCompileShader(vertexHandle);
 
-		System.out.println("Vertex shader output for " + vertexFileName + ":\n" + this.getCompilerOutputShader(v));
+		System.out.println("Vertex shader output for " + vertexFileName + ":\n" + this.getCompilerOutputShader(vertexHandle));
 		
-		gl.glShaderSource(f, 1, fsrc, (int[])null, 0);
-		gl.glCompileShader(f);
+		gl.glShaderSource(fragmentHandle, 1, fsrc, (int[])null, 0);
+		gl.glCompileShader(fragmentHandle);
 
-		System.out.println("Fragment shader output for " + fragmentFileName + ":\n" + this.getCompilerOutputShader(f));
+		System.out.println("Fragment shader output for " + fragmentFileName + ":\n" + this.getCompilerOutputShader(fragmentHandle));
 		
 		p = gl.glCreateProgram();
-		gl.glAttachShader(p, v);
-		gl.glAttachShader(p, f);
+		gl.glAttachShader(p, vertexHandle);
+		gl.glAttachShader(p, fragmentHandle);
 		gl.glLinkProgram(p);
 		
 		System.out.println("Linker output:\n" + this.getLinkerOutput(p));
 		
 		// Report errors
 		int[] status = new int[1];
-		gl.glGetShaderiv(v, GL3.GL_COMPILE_STATUS, status, 0);
+		gl.glGetShaderiv(vertexHandle, GL3.GL_COMPILE_STATUS, status, 0);
 		if(status[0] == GL3.GL_FALSE) {
 			throw new Exception("Could not compile vertex shader " + vertexFileName + ".");
 		}
-		gl.glGetShaderiv(f, GL3.GL_COMPILE_STATUS, status, 0);
+		gl.glGetShaderiv(fragmentHandle, GL3.GL_COMPILE_STATUS, status, 0);
 		if(status[0] == GL3.GL_FALSE) {
 			throw new Exception("Could not compile fragment shader " + fragmentFileName + ".");
 		}
@@ -136,5 +134,11 @@ public class GLShader implements Shader {
 	public int programId()
 	{
 		return p;		
+	}
+	
+	public void dispose(){
+		gl.glDeleteShader(this.vertexHandle);
+		gl.glDeleteShader(this.fragmentHandle);
+		gl.glDeleteProgram(this.p);
 	}
 }

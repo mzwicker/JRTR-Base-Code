@@ -20,6 +20,7 @@ public class Light {
 		diffuse = new Vector3f(1.f,1.f,1.f);
 		ambient = new Vector3f(0.f,0.f,0.f);
 		specular = new Vector3f(1.f,1.f,1.f);
+		attenuation = new Vector3f();
 		spotDirection = new Vector3f(0.f,0.f,1.f);
 		spotExponent = 0.f;
 		spotCutoff = 180.f;
@@ -30,6 +31,7 @@ public class Light {
 	public Vector3f diffuse;
 	public Vector3f specular;
 	public Vector3f ambient;
+	public Vector3f attenuation;
 	public Vector3f spotDirection;
 	public float spotExponent;
 	public float spotCutoff;

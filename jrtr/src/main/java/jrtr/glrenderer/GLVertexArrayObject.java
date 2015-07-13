@@ -63,4 +63,13 @@ public class GLVertexArrayObject {
 		gl.glBindVertexArray(vao.get(0));
 	}
 
+	/**
+	 * Deletes all vbos and the vertex array;
+	 */
+	public void dispose(){
+		gl.glBindVertexArray(0);
+		gl.glBindBuffer(0, 0);
+		gl.glDeleteBuffers(1, vbo);
+		gl.glDeleteVertexArrays(1, vao);
+	}
 }
