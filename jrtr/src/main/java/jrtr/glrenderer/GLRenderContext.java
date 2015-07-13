@@ -1,4 +1,4 @@
-package jrtr;
+package jrtr.glrenderer;
 
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
@@ -7,6 +7,17 @@ import java.util.*;
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
 import javax.vecmath.*;
+
+import jrtr.Light;
+import jrtr.Material;
+import jrtr.RenderContext;
+import jrtr.RenderItem;
+import jrtr.SceneManagerInterface;
+import jrtr.SceneManagerIterator;
+import jrtr.Shader;
+import jrtr.Texture;
+import jrtr.VertexData;
+import jrtr.VertexData.VertexElement;
 
 
 /**

@@ -1,10 +1,14 @@
-package jrtr;
+package jrtr.glrenderer;
 
 import javax.media.opengl.GLProfile;
 import javax.media.opengl.GLCapabilities;
 import javax.media.opengl.GLAutoDrawable;
 import javax.media.opengl.GLEventListener;
 import javax.media.opengl.awt.GLCanvas;
+
+import jrtr.RenderContext;
+import jrtr.RenderPanel;
+
 import java.awt.Component;
 
 /**

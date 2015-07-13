@@ -1,6 +1,13 @@
-package jrtr;
+package jrtr.swrenderer;
 
 import jrtr.RenderContext;
+import jrtr.RenderItem;
+import jrtr.SceneManagerInterface;
+import jrtr.SceneManagerIterator;
+import jrtr.Shader;
+import jrtr.Texture;
+import jrtr.VertexData;
+import jrtr.glrenderer.GLRenderPanel;
 
 import java.awt.image.*;
 

@@ -1,6 +1,8 @@
-package jrtr;
+package jrtr.swrenderer;
 
 import java.io.IOException;
+
+import jrtr.Texture;
 
 /**
  * Manages textures for the software renderer. Not implemented here.

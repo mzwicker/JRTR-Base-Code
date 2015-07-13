@@ -1,5 +1,8 @@
 package jrtr;
 
+import jrtr.glrenderer.GLRenderContext;
+import jrtr.swrenderer.SWRenderContext;
+
 /**
  * Declares the functionality of a render context, or a "renderer". It is
  * currently implemented by {@link GLRenderContext} and {@link SWRenderContext}. 

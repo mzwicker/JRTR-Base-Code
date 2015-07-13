@@ -1,6 +1,9 @@
-package jrtr;
+package jrtr.glrenderer;
 
 import javax.media.opengl.GL3;
+
+import jrtr.Texture;
+
 import java.io.File;
 import java.io.IOException;
 import javax.imageio.ImageIO;

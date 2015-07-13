@@ -1,4 +1,4 @@
-package jrtr;
+package jrtr.glrenderer;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -7,6 +7,8 @@ import java.nio.ByteOrder;
 import java.nio.IntBuffer;
 
 import javax.media.opengl.GL3;
+
+import jrtr.Shader;
 
 /**
  * Manages OpenGL shaders.

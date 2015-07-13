@@ -1,6 +1,8 @@
-package jrtr;
+package jrtr.glrenderer;
 
 import javax.media.opengl.GL3;
+
+import jrtr.VertexData;
 
 /**
  * An implementation of {@link VertexData} which adds the handle to the OpenGL

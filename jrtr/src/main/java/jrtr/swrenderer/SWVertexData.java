@@ -1,4 +1,6 @@
-package jrtr;
+package jrtr.swrenderer;
+
+import jrtr.VertexData;
 
 /**
  * A simple implementation of {@link VertexData} which does not add any

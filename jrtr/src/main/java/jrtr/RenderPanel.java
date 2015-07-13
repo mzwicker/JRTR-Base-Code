@@ -2,6 +2,9 @@ package jrtr;
 
 import java.awt.Component;
 
+import jrtr.glrenderer.GLRenderPanel;
+import jrtr.swrenderer.SWRenderPanel;
+
 /**
  * An interface to display images that are rendered
  * by a render context (a "renderer"). Currently, this

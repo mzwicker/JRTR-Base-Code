@@ -1,6 +1,10 @@
-package jrtr;
+package jrtr.swrenderer;
 
 import javax.swing.JPanel;
+
+import jrtr.RenderContext;
+import jrtr.RenderPanel;
+import jrtr.glrenderer.GLRenderPanel;
 
 /**
  * Implements a panel for a software renderer. It uses a {@link SWJPanel}to

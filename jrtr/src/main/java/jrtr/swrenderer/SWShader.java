@@ -1,4 +1,6 @@
-package jrtr;
+package jrtr.swrenderer;
+
+import jrtr.Shader;
 
 /**
  * Manages shaders for the software renderer. Not implemented here.

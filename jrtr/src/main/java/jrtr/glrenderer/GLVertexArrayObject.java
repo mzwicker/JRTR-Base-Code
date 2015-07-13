@@ -1,4 +1,4 @@
-package jrtr;
+package jrtr.glrenderer;
 
 import java.nio.IntBuffer;
 

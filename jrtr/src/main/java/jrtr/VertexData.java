@@ -2,6 +2,9 @@ package jrtr;
 
 import java.util.LinkedList;
 
+import jrtr.glrenderer.GLVertexData;
+import jrtr.swrenderer.SWVertexData;
+
 
 /**
  * Provides functionality to specify 3D geometry in the form of triangle meshes.
