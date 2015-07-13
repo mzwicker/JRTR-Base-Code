@@ -72,7 +72,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	/**
 	 * Debugging flag and whether to apply bump maps or not.
 	 */
-	public boolean debugGeometry = false, drawBumpMaps = true;
+	public boolean debugGeometry = true, drawBumpMaps = true;
 	
 	private SecondPassDrawer lightDrawer;
 	ArrayList<PostProcessor> postProcessors;
@@ -109,12 +109,13 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.quad.setPosition(0f, 0f);
 		this.quad.setScale(1f, 1f);
 		
-		lightDrawer = new DefaultSecondPassDrawer(defaultGBufferShader, this);		
+		lightDrawer = new DefaultSecondPassDrawer(defaultShader, this);		
 	}
 	
 	public void initShaders(){
 		this.defaultGBufferShader = this.loadShader("../jrtr/shaders/gBufferShaders/gBuffer");
-		this.defaultShader = this.loadShader("../jrtr/shaders/default");
+//		this.defaultShader = this.loadShader("../jrtr/shaders/deferredShaders/general.vert","../jrtr/shaders/deferredShaders/diffuse.frag");
+		this.defaultShader = this.loadShader("../jrtr/shaders/deferredShaders/default");
 	}
 	
 	/**
