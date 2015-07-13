@@ -121,7 +121,6 @@ public class simple
 		    // Make a material that can be used for shading
 			material = new Material();
 			material.shader = diffuseShader;
-			material.shader = null;
 			material.texture = renderContext.makeTexture();
 			try {
 				material.texture.load("../textures/plant.jpg");
