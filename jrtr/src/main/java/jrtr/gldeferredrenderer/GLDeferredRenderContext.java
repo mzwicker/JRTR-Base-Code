@@ -108,11 +108,13 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.quad = new Quad();
 		this.quad.setPosition(0f, 0f);
 		this.quad.setScale(1f, 1f);
+		
+		lightDrawer = new DefaultSecondPassDrawer(defaultGBufferShader, this);		
 	}
 	
 	public void initShaders(){
-		this.defaultGBufferShader = this.loadShader("shaders/gBufferShaders/gBuffer");
-		this.defaultShader = this.loadShader("shaders/default");
+		this.defaultGBufferShader = this.loadShader("../jrtr/shaders/gBufferShaders/gBuffer");
+		this.defaultShader = this.loadShader("../jrtr/shaders/default");
 	}
 	
 	/**

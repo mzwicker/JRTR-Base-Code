@@ -30,7 +30,7 @@ public abstract class GLDeferredRenderPanel implements RenderPanel{
 		protected class GLDeferredRenderContextEventListener implements GLEventListener
 		{
 			private GLDeferredRenderPanel renderPanel;
-			//private GLDeferredRenderContext renderContext;
+			private GLDeferredRenderContext renderContext;
 			
 			public GLDeferredRenderContextEventListener(GLDeferredRenderPanel renderPanel)
 			{
@@ -48,9 +48,10 @@ public abstract class GLDeferredRenderPanel implements RenderPanel{
 				//renderContext = new GLDeferredRenderContext(drawable);
 				GLDeferredRenderContext.gl = drawable.getGL().getGL3();
 //				GPUProfiler.gl = GLDeferredRenderContext.gl;
-				context.init(drawable.getWidth(), drawable.getHeight());
+				renderContext = new GLDeferredRenderContext();
+				renderContext.init(drawable.getWidth(), drawable.getHeight());
 				// Invoke the user-provided call back function
-				renderPanel.init(context);
+				renderPanel.init(renderContext);
 			}
 			
 			/**
@@ -58,12 +59,12 @@ public abstract class GLDeferredRenderPanel implements RenderPanel{
 			 */
 			public void display(GLAutoDrawable drawable)
 			{
-				context.display(drawable);
+				renderContext.display(drawable);
 			}
 			
 			public void reshape(GLAutoDrawable drawable, int x, int y, int width, int height)
 			{
-				context.resize(drawable);
+				renderContext.resize(drawable);
 			}
 			
 			public void displayChanged(GLAutoDrawable drawable, boolean modeChanged, boolean deviceChanged)
@@ -72,7 +73,7 @@ public abstract class GLDeferredRenderPanel implements RenderPanel{
 			
 			public void dispose(GLAutoDrawable g)
 			{
-				context.dispose();
+				renderContext.dispose();
 			}
 		}
 
@@ -82,11 +83,9 @@ public abstract class GLDeferredRenderPanel implements RenderPanel{
 		 * <code>GLJPanel</code>, which is based on Swing.
 		 */
 		private	GLCanvas canvas;
-		private GLDeferredRenderContext context;
 
-		public GLDeferredRenderPanel(GLDeferredRenderContext context)
+		public GLDeferredRenderPanel()
 		{
-			this.context = context;
 		    canvas = new GLCanvas(new GLCapabilities(GLProfile.get(GLProfile.GL3)));
 		    
 			GLEventListener eventListener = new GLDeferredRenderContextEventListener(this);

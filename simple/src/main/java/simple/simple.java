@@ -1,7 +1,8 @@
 package simple;
 
 import jrtr.*;
-import jrtr.glrenderer.GLRenderPanel;
+import jrtr.glrenderer.*;
+import jrtr.gldeferredrenderer.*;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -29,7 +30,7 @@ public class simple
 	 * provide a call-back function for initialization. Here we construct
 	 * a simple 3D scene and start a timer task to generate an animation.
 	 */ 
-	public final static class SimpleRenderPanel extends GLRenderPanel
+	public final static class SimpleRenderPanel extends GLDeferredRenderPanel
 	{
 		/**
 		 * Initialization call-back. We initialize our renderer here.
