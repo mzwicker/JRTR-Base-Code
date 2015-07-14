@@ -44,12 +44,11 @@ public abstract class GLDeferredRenderPanel implements RenderPanel{
 			 */
 			public void init(GLAutoDrawable drawable)
 			{
-				
-				//renderContext = new GLDeferredRenderContext(drawable);
+				// Make an OpenGL rendering context for deferred shading
 				GLDeferredRenderContext.gl = drawable.getGL().getGL3();
-//				GPUProfiler.gl = GLDeferredRenderContext.gl;
 				renderContext = new GLDeferredRenderContext();
 				renderContext.init(drawable.getWidth(), drawable.getHeight());
+				
 				// Invoke the user-provided call back function
 				renderPanel.init(renderContext);
 			}

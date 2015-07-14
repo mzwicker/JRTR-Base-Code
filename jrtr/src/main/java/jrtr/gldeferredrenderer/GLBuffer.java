@@ -5,10 +5,12 @@ import java.nio.IntBuffer;
 import javax.media.opengl.GL3;
 
 /**
- * A simple class for creating, reading and writing to an
- * OpenGL buffer.
+ * A simple class for creating, reading, and writing to an OpenGL framebuffer object (FBO).
+ * FBOs are the key OpenGL data structures for writing (rendering) and reading from off-screen
+ * images and textures.
+ * 
  * @author Heinrich Reich
- *
+ * 
  */
 public abstract class GLBuffer {
 	
@@ -25,7 +27,7 @@ public abstract class GLBuffer {
 	private GL3 gl;
 	
 	/**
-	 * Creates a new OpenGL buffer.
+	 * Creates a new OpenGL framebuffer object (FBO).
 	 * @param gl the OpenGL context
 	 * @param width the width of the textures
 	 * @param height the height of the texture
@@ -47,7 +49,7 @@ public abstract class GLBuffer {
 	}
 	
 	/**
-	 * Creates a new OpenGL buffer.
+	 * Creates a new OpenGL framebuffer object (FBO) with a default GL3.GL_RGB8 format.
 	 * @param gl
 	 * @param width
 	 * @param height
@@ -59,27 +61,27 @@ public abstract class GLBuffer {
 	}
 	
 	/**
-	 * Does the whole initialization step in OpenGL.
-	 * First we generate a frame buffer and bind it as the current buffer.
-	 * Then we create as much textures as were given in the constructor.
-	 * If needed, we also create a depth buffer for the render target.
+	 * Initialize the OpenGL framebuffer object (FBO). First we generate a framebuffer object 
+	 * and bind it as the current buffer. Then we create as many textures as specified in 
+	 * {@link GLBuffer#GLBuffer}. If needed, we also create a depth buffer for the render target.
 	 * The abstract method {@link GLBuffer#handleCreationError} gets called here.
 	 */
 	private void init(){
+		// Generate a reference to a FBO and bind it ("activate it")
 		gl.glGenFramebuffers(1, frameBuffer);
 	    gl.glBindFramebuffer(GL3.GL_DRAW_FRAMEBUFFER, frameBuffer.get(0));
 	    
-	    // Create the for the fbo textures
+	    // Create references for the FBO textures
 	    gl.glGenTextures(textures.capacity(), textures);
 	    
-	    //Attach textures to fbo
+	    // Attach textures to the FBO
 	    for (int i = 0 ; i < textures.capacity() ; i++) {
 	    	gl.glBindTexture(GL3.GL_TEXTURE_2D, this.textures.get(i));
-	    	gl.glTexImage2D(GL3.GL_TEXTURE_2D, 0, /*GL3.GL_RGB32F*/format, width, height, 0, GL3.GL_RGB, GL3.GL_FLOAT, null);
+	    	gl.glTexImage2D(GL3.GL_TEXTURE_2D, 0, format, width, height, 0, GL3.GL_RGB, GL3.GL_FLOAT, null);
 	    	gl.glFramebufferTexture2D(GL3.GL_DRAW_FRAMEBUFFER, GL3.GL_COLOR_ATTACHMENT0 + i, GL3.GL_TEXTURE_2D, this.textures.get(i), 0);
 	    }
 	    
-	    //depth texture
+	    // Depth texture
 	    if(this.useDepthBuffer) this.createDepthBuffer();
 	    
 		for(int i = 0; i< drawBuffers.capacity(); i++)
@@ -88,7 +90,7 @@ public abstract class GLBuffer {
 	    
 	    this.handleCreationError(gl.glCheckFramebufferStatus(GL3.GL_FRAMEBUFFER) != GL3.GL_FRAMEBUFFER_COMPLETE);
 	    
-	    //Bind default render and frame buffer
+	    // Bind default render and frame buffer ("deactivate" the FBO we just created)
 	    gl.glBindFramebuffer(GL3.GL_FRAMEBUFFER, 0);
 	    gl.glBindRenderbuffer(GL3.GL_RENDERBUFFER, 0);
 	}
@@ -113,11 +115,14 @@ public abstract class GLBuffer {
 	protected abstract void handleCreationError(boolean failed);
 	
 	/**
-	 * Binds this buffer, so any rendering calls result on it.
-	 * Use {@link GLBuffer#endWrite()} if you are finished with writing.
+	 * Binds ("activate") this FBO, so any rendering calls will draw into this FBO.
+	 * Use {@link GLBuffer#endWrite()} when you are finished with writing.
 	 */
 	public void beginWrite(){
+		// Store current FBO to restore when done with writing
 		this.prevWriteFBO = gl.getBoundFramebuffer(GL3.GL_DRAW_FRAMEBUFFER);
+		
+		// Bind this FBO
 	    gl.glBindFramebuffer(GL3.GL_DRAW_FRAMEBUFFER, frameBuffer.get(0));
 	    gl.glViewport(0, 0, width, height);
 	}
@@ -131,7 +136,7 @@ public abstract class GLBuffer {
 	}
 	
 	/**
-	 * Begins reading from a texture from this buffer.
+	 * Begins reading from a texture from this FBO by binding  ("activating") it.
 	 * Use {@link GLBuffer#endRead()} if you are done with reading.
 	 * @param i the id of the wished texture.
 	 */

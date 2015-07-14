@@ -31,7 +31,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	/**
 	 * The default shader for this render context.
 	 */
-	public GLShader defaultShader, defaultGBufferShader;
+	public GLShader defaultDeferredShader, defaultGBufferShader;
 	
 	private Quad quad;
 	
@@ -70,54 +70,42 @@ public class GLDeferredRenderContext implements RenderContext{
 	private boolean changedCameraMode = false;
 	
 	/**
-	 * Debugging flag and whether to apply bump maps or not.
+	 * Debugging flag.
 	 */
-	public boolean debugGeometry = true, drawBumpMaps = true;
+	public boolean debugGeometry = true;
 	
-	private SecondPassDrawer lightDrawer;
+	private SecondPassDrawer secondPassDrawer;
 	ArrayList<PostProcessor> postProcessors;
 	private ArrayList<GLVertexArrayObject> vertexArrayObjects = new ArrayList<GLVertexArrayObject>();
 	
 	private GLShader prevUsedShader = null;
 	
-	/**
-	 * Runnables, which may be passed from another thread.
-	 */
-	private CopyOnWriteArrayList<Runnable> runnables;
-	
 	private int activeShaderID;
 	protected SceneManagerInterface sceneManager;
 	
-	/**
-	 * Temporary variables to measure fps.
-	 */
-	public long fps = 1;
-	public long prevTime = 1000;
 	
 	protected void init(int width, int height){
 		gl.glEnable(GL3.GL_DEPTH_TEST);
-		this.runnables = new CopyOnWriteArrayList<Runnable>();
 		this.postProcessors = new ArrayList<PostProcessor>();
+	
+		// Initialize shaders
+		this.defaultGBufferShader = this.loadShader("../jrtr/shaders/gBufferShaders/gBuffer");
+		this.defaultDeferredShader = this.loadShader("../jrtr/shaders/deferredShaders/default");
+		this.useShader(defaultDeferredShader);
 		
-		this.initShaders();
-		useDefaultShader();
-		
+		// Initialize g-buffer and buffer for final image
 		this.gBuffer = new GBuffer(gl, width, height);
 		this.finalBuffer = new FrameBuffer(gl, width, height, false);
 		
+		// The quad to be drawn for deferred shading
 		this.quad = new Quad();
 		this.quad.setPosition(0f, 0f);
 		this.quad.setScale(1f, 1f);
 		
-		lightDrawer = new DefaultSecondPassDrawer(defaultShader, this);		
+		// The deferred shading logic
+		secondPassDrawer = new DefaultSecondPassDrawer(defaultDeferredShader, this);		
 	}
-	
-	public void initShaders(){
-		this.defaultGBufferShader = this.loadShader("../jrtr/shaders/gBufferShaders/gBuffer");
-//		this.defaultShader = this.loadShader("../jrtr/shaders/deferredShaders/general.vert","../jrtr/shaders/deferredShaders/diffuse.frag");
-		this.defaultShader = this.loadShader("../jrtr/shaders/deferredShaders/default");
-	}
-	
+		
 	/**
 	 * Resizes all render targets.
 	 * @param drawable
@@ -129,7 +117,61 @@ public class GLDeferredRenderContext implements RenderContext{
 			proc.resize(drawable.getWidth(), drawable.getHeight());
 		this.frameBufferManager.resize(drawable.getWidth(), drawable.getHeight());
 	}
-	
+
+	/**
+	 * Call-back function to draw the scene. Performs deferred shading in two steps.
+	 * First draw the scene to the g-buffer. Then let the post processors and the 
+	 * second pass drawer manage the perspective. Set the camera into orthogonal mode.
+	 * Start the second pass drawer. Start the post processors. Draw the final image 
+	 * to the screen. Redo the camera mode.
+	 * @param drawable
+	 */
+	public void display(GLAutoDrawable drawable){
+				
+		// Render to g-buffer
+		this.renderToGBuffer(drawable);
+		
+		// Store the current camera for later use by deferred shader and post processors
+		this.secondPassDrawer.managePerspective(gl, this.sceneManager.getCamera(), this.sceneManager.getFrustum());
+		
+		for(PostProcessor processor: this.postProcessors)
+			processor.managePerspective(this.sceneManager.getCamera(), this.sceneManager.getFrustum());
+						
+		// Render a quad over the screen
+		this.changeCameraMode();
+		
+		// Manage the lights, that is, pass the lights to the deferred shading logic
+		this.secondPassDrawer.manageLights(gl, sceneManager.lightIterator());
+		
+		// Do the second drawing step using deferred shading
+		this.finalBuffer.beginWrite();
+		this.beginFrame();
+		this.secondPassDrawer.bindTextures(this);
+		this.secondPassDrawer.drawFinalTexture(this);
+		this.endFrame();
+		this.finalBuffer.endWrite();
+		
+		// Post process
+		for(PostProcessor processor: this.postProcessors)
+			processor.process();
+		
+		// Draw the result to the screen using a bit of OpenGL hacking
+		this.beginFrame();
+		this.finalBuffer.beginRead(0);
+		gl.glBlitFramebuffer(0, 0, this.finalBuffer.getWidth(), this.finalBuffer.getHeight(),  0, 0, 
+			drawable.getWidth(), drawable.getHeight(), GL3.GL_COLOR_BUFFER_BIT, GL3.GL_LINEAR);
+		this.finalBuffer.endRead();
+		
+		// This draws the g-buffer to the screen for debugging
+		if(this.debugGeometry)
+			this.debugDraw();
+		
+		this.endFrame();
+				
+		// Restore the camera
+		this.redoCameraMode();
+	}
+
 	Vector3f vTemp = new Vector3f();
 	/**
 	 * Renders the scene to the g-buffer.
@@ -138,19 +180,24 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * @param drawable
 	 */
 	protected void renderToGBuffer(GLAutoDrawable drawable){
-		this.gBuffer.beginWrite();
-			this.beginFrame();
-			SceneManagerIterator iterator = sceneManager.iterator();
-			while (iterator.hasNext()) {
-				RenderItem r = iterator.next();
-				if (r.getShape() != null) {
-					Material m = r.getShape().getMaterial();
-					if(m != null && m.shader != null) this.useShader(m.shader);
-					else this.useShader(defaultGBufferShader);
-					draw(r);
-				}
+		// Bind the g-buffer and start writing into it
+		this.gBuffer.beginWrite();		
+		this.beginFrame();
+		
+		// Iterate over the scene and draw all objects
+		SceneManagerIterator iterator = sceneManager.iterator();
+		while (iterator.hasNext()) {
+			RenderItem r = iterator.next();
+			if (r.getShape() != null) {
+				Material m = r.getShape().getMaterial();
+				if(m != null && m.shader != null) this.useShader(m.shader);
+				else this.useShader(defaultGBufferShader);
+				draw(r);
 			}
-			this.endFrame();
+		}
+		
+		// Un-bind the g-buffer
+		this.endFrame();
 		this.gBuffer.endWrite();
 	}
 	
@@ -186,106 +233,33 @@ public class GLDeferredRenderContext implements RenderContext{
 			this.sceneManager.getFrustum().getProjectionMatrix().set(tempProj);
 		}
 	}
-
-	/**
-	 * Draw the actual scene in two steps.
-	 * First draw the scene to the G-Buffer.
-	 * Then let the post processors and the second pass drawer manage the perspective.
-	 * Set the camera into orthogonal mode.
-	 * Start the second pass drawer.
-	 * Start the post processors.
-	 * Draw the final image to the screen.
-	 * Redo the camera mode.
-	 * @param drawable
-	 */
-	public void display(GLAutoDrawable drawable){
-		
-		long time = System.currentTimeMillis();
-		this.fps = 1000/Math.max(1, time-this.prevTime);
-//		GPUProfiler.startFrame();
-		
-		// Render to g-buffer
-		this.renderToGBuffer(drawable);
-		
-		// Store the current camera
-		for(PostProcessor processor: this.postProcessors)
-			processor.managePerspective(this.sceneManager.getCamera(), this.sceneManager.getFrustum());
-		
-		this.lightDrawer.managePerspective(gl, this.sceneManager.getCamera(), this.sceneManager.getFrustum());
-		
-		// Render a quad over the screen
-		this.changeCameraMode();
-		
-		// Manage the lights
-		this.lightDrawer.manageLights(gl, sceneManager.lightIterator());
-		
-		// Do the second dr step
-		this.finalBuffer.beginWrite();
-			this.beginFrame();
-				this.lightDrawer.bindTextures(this);
-				this.lightDrawer.drawFinalTexture(this);
-			this.endFrame();
-		this.finalBuffer.endWrite();
-		
-		// Post process
-		for(PostProcessor processor: this.postProcessors)
-			processor.process();
-		
-		// Draw the result to the screen
-		this.beginFrame();
-			this.finalBuffer.beginRead(0);
-				gl.glBlitFramebuffer(0, 0, this.finalBuffer.getWidth(), this.finalBuffer.getHeight(),  0, 0, 
-					drawable.getWidth(), drawable.getHeight(), GL3.GL_COLOR_BUFFER_BIT, GL3.GL_LINEAR);
-			this.finalBuffer.endRead();
-			this.debugDraw();
-		this.endFrame();
-		
-//		GPUProfiler.endFrame();
-//		if(GPUProfiler.getFrame() == 100) {
-//			System.out.println("DR-Rendering: "+GPUProfiler.getAverageTime());
-//			GPUProfiler.clear();
-//		}
-		
-		// Restore the camera
-		this.redoCameraMode();
-		
-		// Invoke runnables from other threads.
-		for(Runnable runnable: this.runnables)
-			runnable.run();
-		// Clear runnables
-		if(this.runnables.size() > 0) this.runnables.clear();
-		// Store the rendering time.
-		this.prevTime = time;
-	}
 	
 	/**
-	 * Draws the fbo to the screen.
+	 * Draws the g-buffer to the screen for debugging.
 	 */
 	protected void debugDraw(){
-		if(this.debugGeometry){
-			this.drawTexture(0, this.gBuffer.getDepthBufferTexture(), "myTexture", this.defaultShader, 0, 0, .2f, .2f);
-			this.drawTexture(0, this.gBuffer.getColorBufferTexture(), "myTexture", this.defaultShader, .2f, 0f, .2f, .2f);
-			this.drawTexture(0, this.gBuffer.getNormalBufferTexture(), "myTexture", this.defaultShader, .4f, 0f, .2f, .2f);
-			this.drawTexture(0, this.gBuffer.getUVBufferTexture(), "myTexture", this.defaultShader, .6f, 0f, .2f, .2f);
-		}
+		this.drawTexture(0, this.gBuffer.getDepthBufferTexture(), "myTexture", this.defaultDeferredShader, 0, 0, .2f, .2f);
+		this.drawTexture(0, this.gBuffer.getColorBufferTexture(), "myTexture", this.defaultDeferredShader, .2f, 0f, .2f, .2f);
+		this.drawTexture(0, this.gBuffer.getNormalBufferTexture(), "myTexture", this.defaultDeferredShader, .4f, 0f, .2f, .2f);
+		this.drawTexture(0, this.gBuffer.getUVBufferTexture(), "myTexture", this.defaultDeferredShader, .6f, 0f, .2f, .2f);
 	}
 	
 	/**
-	 * Binds a texture with the given parameters.
-	 * @param textureLocation location of the texture in the shader program.
-	 * @param textureId id of the texture.
+	 * Binds a texture and assigns it to a specified texture in a shader.
+	 * @param textureLocation the OpenGL texture index that should be used for this texture.
+	 * @param textureId the OpenGL reference to the texture.
 	 * @param sampler2DName name of the texture in the shader program.
 	 * @param shader the shader program object.
 	 */
 	public void bindTexture(int textureLocation, int textureId, String sampler2DName, GLShader shader){
-		this.useShader((shader == null) ? this.defaultShader: shader);
+		this.useShader((shader == null) ? this.defaultDeferredShader: shader);
 		//if(textureId != this.prevTexture || textureLocation != this.prevTexLocation){
 			gl.glActiveTexture(GL3.GL_TEXTURE0+textureLocation);
 			gl.glEnable(GL3.GL_TEXTURE_2D);
 			gl.glBindTexture(GL3.GL_TEXTURE_2D, textureId);
 			gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_LINEAR);
 			gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_LINEAR);
-			gl.glUniform1i(gl.glGetUniformLocation(((shader == null) ? this.defaultShader: shader).programId(), sampler2DName), textureLocation);
+			gl.glUniform1i(gl.glGetUniformLocation(((shader == null) ? this.defaultDeferredShader: shader).programId(), sampler2DName), textureLocation);
 		//}
 	}
 	
@@ -303,7 +277,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	 */
 	public void drawTexture(int texturelocation, int textureId, String sampler2DName, GLShader shader,
 			float x, float y, float width, float height){
-		if(shader == null) shader = this.defaultShader;
+		if(shader == null) shader = this.defaultDeferredShader;
 		this.bindTexture(texturelocation, textureId, sampler2DName, shader);
 		this.changeCameraMode();
 		this.drawTexture(x, y, width, height);
@@ -311,7 +285,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	}
 	
 	/**
-	 * Draws the previous bound texture with the previous bound shader program in the specified rectangular area.
+	 * Draws the currently bound texture with the currently bound shader program in the specified rectangular area.
 	 * @param x see {@link #drawTexture(float, float, float, float)}
 	 * @param y see {@link #drawTexture(float, float, float, float)}
 	 * @param width see {@link #drawTexture(float, float, float, float)}
@@ -323,7 +297,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	}
 	
 	/**
-	 * Draws the previous bound texture with the previous bound shader program on the whole screen.
+	 * Draws the currently bound texture with the currently bound shader program on the whole screen.
 	 */
 	public void drawTexture(){
 		this.drawTexture(0f, 0f, 1f, 1f);
@@ -363,7 +337,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * @param drawer
 	 */
 	public void setSecondPassDrawer(SecondPassDrawer drawer){
-		this.lightDrawer = drawer;
+		this.secondPassDrawer = drawer;
 	}
 	
 	/**
@@ -382,7 +356,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * Uses the default shader.
 	 */
 	public void useDefaultShader() {
-		this.useShader(defaultShader);
+		this.useShader(defaultDeferredShader);
 	}
 	
 	/**
@@ -392,17 +366,6 @@ public class GLDeferredRenderContext implements RenderContext{
 	public boolean containsProcessor(PostProcessor proc){
 		return this.postProcessors.contains(proc);
 	}
-	
-	/**
-	 * Posts a runnable to the OpenGL thread.
-	 * This has to be used, if a task has to be done synchronously to the rendering process.
-	 * Like updating the camera.
-	 * @param runnable
-	 */
-	public void postRunnable(Runnable runnable){
-		this.runnables.add(runnable);
-	}
-	
 
 	/**
 	 * Set the scene manager. The scene manager contains the 3D scene that will
@@ -415,7 +378,7 @@ public class GLDeferredRenderContext implements RenderContext{
 
 	/**
 	 * This method is called at the beginning of each frame, i.e., before scene
-	 * drawing starts.
+	 * drawing starts. It clears the color and depth buffers.
 	 */
 	public void beginFrame() {
 		//gl.glUseProgram(activeShaderID);
@@ -431,7 +394,8 @@ public class GLDeferredRenderContext implements RenderContext{
 	}
 
 	/**
-	 * The main rendering method.
+	 * The main rendering method to draw individual objects. Note that rendering will always
+	 * (implicitly) draw into the currently bound framebuffer object (FBO).
 	 * 
 	 * @param renderItem the object that needs to be drawn
 	 */
@@ -523,12 +487,7 @@ public class GLDeferredRenderContext implements RenderContext{
 		if(m != null && m.shader != null) {			
 			// Activate the texture, if the material has one
 			if(m.diffuseMap != null)
-				this.bindTexture(0, ((GLTexture)m.diffuseMap).getId(), "myTexture", (GLShader) m.shader);
-			
-			// Activate the bump map, if the material has one
-			if(m.normalMap != null) 
-				if(drawBumpMaps) this.bindTexture(1, ((GLTexture)m.normalMap).getId(), "bumpMap", (GLShader) m.shader);
-				else this.bindTexture(1, 0, "bumpMap", (GLShader) m.shader);
+				this.bindTexture(0, ((GLTexture)m.diffuseMap).getId(), "myTexture", (GLShader) m.shader);			
 		}
 	}
 	
@@ -582,19 +541,6 @@ public class GLDeferredRenderContext implements RenderContext{
 	}
 	
 	/**
-	 * Re-compiles all shaders.
-	 */
-	public void reloadShaders(){
-		this.postRunnable(new Runnable(){
-			@Override
-			public void run() {
-				shaderManager.reloadShaders(GLDeferredRenderContext.this);
-			}
-			
-		});
-	}
-	
-	/**
 	 * Loads the texture from the given path
 	 * @param path
 	 * @return <code>null</code> if the texture couldn't be loaded or the GLTexture reference.
@@ -609,59 +555,5 @@ public class GLDeferredRenderContext implements RenderContext{
 			System.err.println(e.getMessage());
 		}
 		return tex;
-	}
-	
-	/**
-	 * Creates an fbo with the given parameters.
-	 * @param width
-	 * @param height
-	 * @param useDepth
-	 * @param format
-	 * @param automaticResize
-	 * @return the fbo.
-	 */
-	public FrameBuffer createFBO(int width, int height, boolean useDepth, int format, boolean automaticResize){
-		FrameBuffer fbo = null;
-		try{
-			fbo = new FrameBuffer(gl, width, height, useDepth, format);
-			this.frameBufferManager.addFrameBuffer(fbo, automaticResize);
-		} catch(RuntimeException e){
-			System.err.println("Problem with the fbo:");
-			System.err.println(e.getMessage());
-		}
-		return fbo;
-	}
-	
-	/**
-	 * Creates an fbo with the given parameters.
-	 * @param width
-	 * @param height
-	 * @param useDepth
-	 * @param format
-	 * @return the fbo.
-	 */
-	public FrameBuffer createFBO(int width, int height, boolean useDepth, int format){
-		return this.createFBO(width, height, useDepth, format, true);
-	}
-	
-	/**
-	 * Creates an fbo with the given parameters.
-	 * @param width
-	 * @param height
-	 * @return the fbo.
-	 */
-	public FrameBuffer createFBO(int width, int height){
-		return this.createFBO(width, height, false, GL3.GL_RGB8);
-	}
-	
-	/**
-	 * Creates an fbo with the given parameters.
-	 * @param width
-	 * @param height
-	 * @param automaticResize
-	 * @return the fbo.
-	 */
-	public FrameBuffer createFBO(int width, int height, boolean automaticResize){
-		return this.createFBO(width, height, false, GL3.GL_RGB8, automaticResize);
 	}
 }
