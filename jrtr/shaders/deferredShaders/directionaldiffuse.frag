@@ -1,8 +1,7 @@
 #version 330
 
 in vec2 texCoords;
-#define MAX_DIR_LIGHTS 10
-#define PI 3.1415926535897932384626433832795
+#define MAX_DIR_LIGHTS 4
 
 uniform vec3 dirLightColor[MAX_DIR_LIGHTS];
 uniform vec3 dirLightDirection[MAX_DIR_LIGHTS];
@@ -13,7 +12,6 @@ uniform sampler2D depth;
 uniform mat4 invProj;
 uniform mat4 proj;
 
-const vec3 ambient = vec3(0.1);
 const vec2 oneVec = vec2(1.0);
 
 vec3 getPositionFromDepth(){
@@ -45,7 +43,6 @@ void main()
 		float lambert = clamp(dot(n, lDirN), 0.0, 1.0);
 		sum += dirLightColor[i]  * lambert * c;
 	}
-	sum += ambient;
 	
 	gl_FragColor = vec4(sum, 1.0);
 }

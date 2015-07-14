@@ -13,7 +13,6 @@ public class Material {
 	public Vector3f specular;
 	public Vector3f ambient;
 	public float shininess;
-	public Texture texture;
 	public Shader shader;
 	
 	public Material()
@@ -22,7 +21,11 @@ public class Material {
 		specular = new Vector3f(1.f, 1.f, 1.f);
 		ambient = new Vector3f(1.f, 1.f, 1.f);
 		shininess = 1.f;
-		texture = null;
+		diffuseMap = null;
+		normalMap = null;
+		specularMap = null;
+		ambientMap = null;
+		alphaMap = null;
 		shader = null;
 	}
 }

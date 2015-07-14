@@ -121,9 +121,9 @@ public class simple
 		    // Make a material that can be used for shading
 			material = new Material();
 			material.shader = diffuseShader;
-			material.texture = renderContext.makeTexture();
+			material.diffuseMap = renderContext.makeTexture();
 			try {
-				material.texture.load("../textures/plant.jpg");
+				material.diffuseMap.load("../textures/plant.jpg");
 			} catch(Exception e) {				
 				System.out.print("Could not load texture.\n");
 				System.out.print(e.getMessage());

@@ -294,12 +294,12 @@ public class GLRenderContext implements RenderContext {
 			// Activate the shader
 			useShader(m.shader);
 			
-			// Activate the texture, if the material has one
-			if(m.texture != null) {
+			// Activate the diffuse texture, if the material has one
+			if(m.diffuseMap != null) {
 				// OpenGL calls to activate the texture 
 				gl.glActiveTexture(GL3.GL_TEXTURE0);	// Work with texture unit 0
 				gl.glEnable(GL3.GL_TEXTURE_2D);
-				gl.glBindTexture(GL3.GL_TEXTURE_2D, ((GLTexture)m.texture).getId());
+				gl.glBindTexture(GL3.GL_TEXTURE_2D, ((GLTexture)m.diffuseMap).getId());
 				gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_LINEAR);
 				gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_LINEAR);
 				// We assume the texture in the shader is called "myTexture"

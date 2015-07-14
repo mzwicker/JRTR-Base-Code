@@ -87,6 +87,8 @@ public class GLDeferredRenderContext implements RenderContext{
 		
 		// The deferred shading logic
 		secondPassDrawer = new DirectionalDiffuseSecondPassDrawer(this);		
+//		secondPassDrawer = new DefaultSecondPassDrawer(this);		
+
 	}
 		
 	/**
@@ -167,15 +169,13 @@ public class GLDeferredRenderContext implements RenderContext{
 		// Bind the g-buffer and start writing into it
 		this.gBuffer.beginWrite();		
 		this.beginFrame();
+		this.useShader(defaultGBufferShader);
 		
 		// Iterate over the scene and draw all objects
 		SceneManagerIterator iterator = sceneManager.iterator();
 		while (iterator.hasNext()) {
 			RenderItem r = iterator.next();
 			if (r.getShape() != null) {
-				Material m = r.getShape().getMaterial();
-				if(m != null && m.shader != null) this.useShader(m.shader);
-				else this.useShader(defaultGBufferShader);
 				draw(r);
 			}
 		}
@@ -367,7 +367,21 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * @param renderItem the object that needs to be drawn
 	 */
 	protected void draw(RenderItem renderItem) {
-		setMaterial(renderItem.getShape().getMaterial());
+
+		// Pass material properties to g-buffer shader
+		// Note we are not activating the material shader, 
+		// since we just want to draw into the g-buffer at 
+		// this point
+		Material m = renderItem.getShape().getMaterial();
+		if(m != null && m.diffuseMap != null)
+			this.bindTexture(0, ((GLTexture)m.diffuseMap).getId(), "myTexture", (GLShader) this.defaultGBufferShader);			
+		else {
+//			this.bindTexture(0, 0/*((GLTexture)m.diffuseMap).getId()*/, "myTexture", (GLShader) this.defaultGBufferShader);			
+//			gl.glActiveTexture(GL3.GL_TEXTURE0);
+//			gl.glEnable(GL3.GL_TEXTURE_2D);
+//			gl.glBindTexture(GL3.GL_TEXTURE_2D, 1);
+	
+		}
 		
 		GLVertexData vertexData = ((GLVertexData) renderItem.getShape().getVertexData());
 		if (vertexData.getVAO() == null) {
@@ -439,23 +453,6 @@ public class GLDeferredRenderContext implements RenderContext{
 
 		GLUtils.setUniformMatrix4f(this, this.prevUsedShader, "modelview", this.mTemp);
 		GLUtils.setUniformMatrix4f(this, this.prevUsedShader, "projection", this.sceneManager.getFrustum().getProjectionMatrix());
-	}
-
-	/**
-	 * Set up a material for rendering. Activate its shader, and pass the 
-	 * material properties, textures, and light sources to the shader.
-	 * 
-	 * @param m
-	 * 		the material to be set up for rendering
-	 */
-	protected void setMaterial(Material m) {	
-	
-		// Set up the shader for the material, if it has one
-		if(m != null && m.shader != null) {			
-			// Activate the texture, if the material has one
-			if(m.diffuseMap != null)
-				this.bindTexture(0, ((GLTexture)m.diffuseMap).getId(), "myTexture", (GLShader) m.shader);			
-		}
 	}
 
 	@Override
