@@ -15,16 +15,10 @@ import jrtr.Light;
 public interface SecondPassDrawer {
 	
 	/**
-	 * Binds all needed textures to a shader.
+	 * Manage and set up the shader for deferred shading.
 	 * @param context
 	 */
-	public void bindTextures(GLDeferredRenderContext context);
-	
-	/**
-	 * Draws the final texture.
-	 * @param context
-	 */
-	public void drawFinalTexture(GLDeferredRenderContext context);
+	public void manageShader(GLDeferredRenderContext context);
 	
 	/**
 	 * Makes sure that all lights get passed to the shaders. 

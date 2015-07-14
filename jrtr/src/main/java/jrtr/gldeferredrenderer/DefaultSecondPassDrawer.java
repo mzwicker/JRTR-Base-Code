@@ -27,13 +27,11 @@ public class DefaultSecondPassDrawer implements SecondPassDrawer{
 	}
 	
 	@Override
-	public void bindTextures(GLDeferredRenderContext context) {
-		// We do not use any extra textures here
-	}
-
-	@Override
-	public void drawFinalTexture(GLDeferredRenderContext context) {
-		context.drawTexture(0, context.getGBuffer().getColorBufferTexture(), "myTexture", shader, 0, 0, 1, 1);
+	public void manageShader(GLDeferredRenderContext context) {
+		context.useShader(this.shader);
+		// Bind the color buffer from the g-buffer to texture unit 0, and pass
+		// this to shader
+		context.bindTexture(0, context.getGBuffer().getColorBufferTexture(), "myTexture", shader);
 	}
 
 	@Override

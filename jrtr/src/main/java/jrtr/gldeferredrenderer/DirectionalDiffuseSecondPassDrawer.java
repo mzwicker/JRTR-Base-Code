@@ -23,39 +23,23 @@ public class DirectionalDiffuseSecondPassDrawer implements SecondPassDrawer{
 	
 	protected GLShader shader;
 	protected GLDeferredRenderContext renderContext;
-	ArrayList<Light> pointLights, directionalLights, spotLights;
+	ArrayList<Light> directionalLights;
+	private Light defaultLight;
 		
-	public DirectionalDiffuseSecondPassDrawer(GLShader shader, GLDeferredRenderContext context){
+	public DirectionalDiffuseSecondPassDrawer(GLDeferredRenderContext context){
 		this.renderContext = context;
-		this.setShader(shader);
-		pointLights = new ArrayList<Light>();
+		this.shader = GLUtils.loadShader("../jrtr/shaders/deferredShaders/default.vert", "../jrtr/shaders/deferredShaders/directionaldiffuse.frag");
 		directionalLights = new ArrayList<Light>();
-		spotLights = new ArrayList<Light>();
+		defaultLight = new Light();
 	}
 	
-	/**
-	 * Sets the shader for this second pass drawer.
-	 * @param shader
-	 */
-	public void setShader(GLShader shader) {
-		this.shader = shader;
-		GLUtils.setUniform3f(renderContext, shader, "ambient", .5f, .5f, .5f);
-		GLUtils.setUniform1f(renderContext, shader, "specularCoefficent", 16);
-		GLUtils.setUniform1i(renderContext, shader, "useColor", 1);
-		GLUtils.setUniform1i(renderContext, shader, "drawPointLights", 1);
-		GLUtils.setUniform1i(renderContext, shader, "drawSpotLights", 1);
-	}
-
 	@Override
-	public void bindTextures(GLDeferredRenderContext context) {
+	public void manageShader(GLDeferredRenderContext context) {
+		context.useShader(this.shader);
 		context.bindTexture(3, context.getGBuffer().getDepthBufferTexture(), "depth", shader);
 		context.bindTexture(2, context.getGBuffer().getUVBufferTexture(), "uvs", shader);
 		context.bindTexture(1, context.getGBuffer().getNormalBufferTexture(), "normals", shader);
-	}
-
-	@Override
-	public void drawFinalTexture(GLDeferredRenderContext context) {
-		context.drawTexture(1, context.getGBuffer().getUVBufferTexture(), "colors", shader, 0, 0, 1, 1);
+		context.bindTexture(0, context.getGBuffer().getColorBufferTexture(), "color", shader);
 	}
 
 	@Override
@@ -65,17 +49,12 @@ public class DirectionalDiffuseSecondPassDrawer implements SecondPassDrawer{
 				Light l = iterator.next();
 				switch(l.type){
 				case DIRECTIONAL: this.directionalLights.add(l); break;
-				case SPOT: this.spotLights.add(l); break;
-				case POINT: this.pointLights.add(l); break;
 				}
 			}
-			GLUtils.setUniform3f(renderContext, shader, "lightsLength", this.pointLights.size(), this.directionalLights.size(), this.spotLights.size());
-			GLUtils.passPointLightsToShader(gl, this.shader,this.pointLights);
+			if(this.directionalLights.size()==0)
+				this.directionalLights.add(defaultLight);
 			GLUtils.passDirectionalLightsToShader(gl, this.shader, this.directionalLights);
-			GLUtils.passSpotLightsToShader(gl, this.shader, this.spotLights);
-			this.spotLights.clear();
 			this.directionalLights.clear();
-			this.pointLights.clear();
 		}
 	}
 

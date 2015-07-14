@@ -13,11 +13,11 @@ in vec2 texcoord;
 
 // Output variables
 out vec4 frag_color;
-out vec2 texCoordOut;
+out vec2 texCoords;
 
 void main()
 {
-	texCoordOut = texcoord;
+	texCoords = texcoord;
 	frag_color = color;
 	gl_Position = projection * modelview * position;
 }

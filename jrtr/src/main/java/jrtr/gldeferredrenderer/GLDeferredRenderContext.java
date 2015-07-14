@@ -86,7 +86,7 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.quad.setScale(1f, 1f);
 		
 		// The deferred shading logic
-		secondPassDrawer = new DefaultSecondPassDrawer(this);		
+		secondPassDrawer = new DirectionalDiffuseSecondPassDrawer(this);		
 	}
 		
 	/**
@@ -124,12 +124,14 @@ public class GLDeferredRenderContext implements RenderContext{
 		
 		// Manage the lights, that is, pass the lights to the deferred shading logic
 		this.secondPassDrawer.manageLights(gl, sceneManager.lightIterator());
+		// Prepare the shader for deferred shading
+		this.secondPassDrawer.manageShader(this);
 		
 		// Do the second drawing step using deferred shading
 		this.finalBuffer.beginWrite();
 		this.beginFrame();
-		this.secondPassDrawer.bindTextures(this);
-		this.secondPassDrawer.drawFinalTexture(this);
+		// Draw full screen quad to perform deferred shading on entire screen
+		this.drawFullScreenQuad();
 		this.endFrame();
 		this.finalBuffer.endWrite();
 		
@@ -220,10 +222,14 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * Draws the g-buffer to the screen for debugging.
 	 */
 	protected void debugDraw(){
-		this.drawTexture(0, this.gBuffer.getDepthBufferTexture(), "myTexture", this.debugShader, 0, 0, .2f, .2f);
-		this.drawTexture(0, this.gBuffer.getColorBufferTexture(), "myTexture", this.debugShader, .2f, 0f, .2f, .2f);
-		this.drawTexture(0, this.gBuffer.getNormalBufferTexture(), "myTexture", this.debugShader, .4f, 0f, .2f, .2f);
-		this.drawTexture(0, this.gBuffer.getUVBufferTexture(), "myTexture", this.debugShader, .6f, 0f, .2f, .2f);
+		this.bindTexture(0, this.gBuffer.getDepthBufferTexture(), "myTexture", this.debugShader);
+		this.drawScreenAlignedQuad(0, 0, .2f, .2f);
+		this.bindTexture(0, this.gBuffer.getColorBufferTexture(), "myTexture", this.debugShader);
+		this.drawScreenAlignedQuad(.2f, 0, .2f, .2f);
+		this.bindTexture(0, this.gBuffer.getNormalBufferTexture(), "myTexture", this.debugShader);
+		this.drawScreenAlignedQuad(.4f, 0, .2f, .2f);
+		this.bindTexture(0, this.gBuffer.getUVBufferTexture(), "myTexture", this.debugShader);
+		this.drawScreenAlignedQuad(.6f, 0, .2f, .2f);
 	}
 	
 	/**
@@ -247,42 +253,25 @@ public class GLDeferredRenderContext implements RenderContext{
 	}
 	
 	/**
-	 * Draws a texture in a rectangle with the specified values.
-	 * In the bottom left corner are the coordinates of the rectangle.
-	 * @param texturelocation see {@link #bindTexture(int, int, String, GLShader)}
-	 * @param textureId see {@link #bindTexture(int, int, String, GLShader)}
-	 * @param sampler2DName see {@link #bindTexture(int, int, String, GLShader)} may be null to draw just the texture
-	 * @param shader see {@link #bindTexture(int, int, String, GLShader)}
-	 * @param x 0 means left border of the screen, 1 means right border of the screen 
-	 * @param y 0 means bottom border of the screen, 1 means top border of the screen 
-	 * @param width 0 means no width, 1 means the full screen width
-	 * @param height 0 means no height, 1 means the full screen height
+	 * Draws a screen aligned quad in the specified rectangular area (the whole
+	 * screen is (0,0,1,1).
+	 * @param x see {@link #drawScreenAlignedQuad(float, float, float, float)}
+	 * @param y see {@link #drawScreenAlignedQuad(float, float, float, float)}
+	 * @param width see {@link #drawScreenAlignedQuad(float, float, float, float)}
+	 * @param height see {@link #drawScreenAlignedQuad(float, float, float, float)}
 	 */
-	public void drawTexture(int texturelocation, int textureId, String sampler2DName, GLShader shader,
-			float x, float y, float width, float height){		
-		this.bindTexture(texturelocation, textureId, sampler2DName, shader);
+	public void drawScreenAlignedQuad(float x, float y, float width, float height){
 		this.changeCameraMode();
-		this.drawTexture(x, y, width, height);
+		this.quad.setTransformation(x, y, width, height);
+		this.draw(this.quad.getRenderItem());
 		this.redoCameraMode();
 	}
 	
 	/**
-	 * Draws the currently bound texture with the currently bound shader program in the specified rectangular area.
-	 * @param x see {@link #drawTexture(float, float, float, float)}
-	 * @param y see {@link #drawTexture(float, float, float, float)}
-	 * @param width see {@link #drawTexture(float, float, float, float)}
-	 * @param height see {@link #drawTexture(float, float, float, float)}
+	 * Draws a quad on the whole screen.
 	 */
-	public void drawTexture(float x, float y, float width, float height){
-		this.quad.setTransformation(x, y, width, height);
-		this.draw(this.quad.getRenderItem());
-	}
-	
-	/**
-	 * Draws the currently bound texture with the currently bound shader program on the whole screen.
-	 */
-	public void drawTexture(){
-		this.drawTexture(0f, 0f, 1f, 1f);
+	public void drawFullScreenQuad(){
+		this.drawScreenAlignedQuad(0f, 0f, 1f, 1f);
 	}
 	
 	/**
