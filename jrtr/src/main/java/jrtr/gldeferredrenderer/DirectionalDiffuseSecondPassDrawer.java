@@ -39,11 +39,11 @@ public class DirectionalDiffuseSecondPassDrawer implements SecondPassDrawer{
 	 */
 	public void setShader(GLShader shader) {
 		this.shader = shader;
-		ShaderUtils.setUniform3f(renderContext, shader, "ambient", .5f, .5f, .5f);
-		ShaderUtils.setUniform1f(renderContext, shader, "specularCoefficent", 16);
-		ShaderUtils.setUniform1i(renderContext, shader, "useColor", 1);
-		ShaderUtils.setUniform1i(renderContext, shader, "drawPointLights", 1);
-		ShaderUtils.setUniform1i(renderContext, shader, "drawSpotLights", 1);
+		GLUtils.setUniform3f(renderContext, shader, "ambient", .5f, .5f, .5f);
+		GLUtils.setUniform1f(renderContext, shader, "specularCoefficent", 16);
+		GLUtils.setUniform1i(renderContext, shader, "useColor", 1);
+		GLUtils.setUniform1i(renderContext, shader, "drawPointLights", 1);
+		GLUtils.setUniform1i(renderContext, shader, "drawSpotLights", 1);
 	}
 
 	@Override
@@ -69,10 +69,10 @@ public class DirectionalDiffuseSecondPassDrawer implements SecondPassDrawer{
 				case POINT: this.pointLights.add(l); break;
 				}
 			}
-			ShaderUtils.setUniform3f(renderContext, shader, "lightsLength", this.pointLights.size(), this.directionalLights.size(), this.spotLights.size());
-			ShaderUtils.passPointLightsToShader(gl, this.shader,this.pointLights);
-			ShaderUtils.passDirectionalLightsToShader(gl, this.shader, this.directionalLights);
-			ShaderUtils.passSpotLightsToShader(gl, this.shader, this.spotLights);
+			GLUtils.setUniform3f(renderContext, shader, "lightsLength", this.pointLights.size(), this.directionalLights.size(), this.spotLights.size());
+			GLUtils.passPointLightsToShader(gl, this.shader,this.pointLights);
+			GLUtils.passDirectionalLightsToShader(gl, this.shader, this.directionalLights);
+			GLUtils.passSpotLightsToShader(gl, this.shader, this.spotLights);
 			this.spotLights.clear();
 			this.directionalLights.clear();
 			this.pointLights.clear();
@@ -83,18 +83,18 @@ public class DirectionalDiffuseSecondPassDrawer implements SecondPassDrawer{
 	private final Matrix4f temp = new Matrix4f();
 	@Override
 	public void managePerspective(GL3 gl, Camera cam, Frustum frust) {
-		ShaderUtils.setCameraMatrix(cam.getCameraMatrix());
+		GLUtils.setCameraMatrix(cam.getCameraMatrix());
 		try{
 			temp.invert(frust.getProjectionMatrix());
-			ShaderUtils.setUniformMatrix4f(this.renderContext, this.shader, "invProj", temp);
+			GLUtils.setUniformMatrix4f(this.renderContext, this.shader, "invProj", temp);
 		} catch(Exception e){
 			
 		}
-		ShaderUtils.setUniformMatrix4f(this.renderContext, this.shader, "proj", frust.getProjectionMatrix());
+		GLUtils.setUniformMatrix4f(this.renderContext, this.shader, "proj", frust.getProjectionMatrix());
 		try{
 			temp.invert(cam.getCameraMatrix());
-			ShaderUtils.setUniformMatrix4f(this.renderContext, this.shader, "cameraViewToWorldMatrix", temp);
+			GLUtils.setUniformMatrix4f(this.renderContext, this.shader, "cameraViewToWorldMatrix", temp);
 		} catch(Exception e){}
-		ShaderUtils.setUniformMatrix4f(this.renderContext, this.shader, "worldToCameraViewMatrix", cam.getCameraMatrix());
+		GLUtils.setUniformMatrix4f(this.renderContext, this.shader, "worldToCameraViewMatrix", cam.getCameraMatrix());
 	}
 }

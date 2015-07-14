@@ -30,7 +30,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	/**
 	 * The default shader for this render context.
 	 */
-	public GLShader defaultDeferredShader, defaultGBufferShader;
+	public GLShader defaultGBufferShader, debugShader;
 	
 	private Quad quad;
 	
@@ -73,9 +73,8 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.postProcessors = new ArrayList<PostProcessor>();
 	
 		// Initialize shaders
-		this.defaultGBufferShader = this.loadShader("../jrtr/shaders/gBufferShaders/gBuffer");
-		this.defaultDeferredShader = this.loadShader("../jrtr/shaders/deferredShaders/default");
-		this.useShader(defaultDeferredShader);
+		this.defaultGBufferShader = GLUtils.loadShader("../jrtr/shaders/gBufferShaders/gBuffer");
+		this.debugShader = GLUtils.loadShader("../jrtr/shaders/deferredShaders/default");
 		
 		// Initialize g-buffer and buffer for final image
 		this.gBuffer = new GBuffer(gl, width, height);
@@ -87,7 +86,7 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.quad.setScale(1f, 1f);
 		
 		// The deferred shading logic
-		secondPassDrawer = new DefaultSecondPassDrawer(defaultDeferredShader, this);		
+		secondPassDrawer = new DefaultSecondPassDrawer(this);		
 	}
 		
 	/**
@@ -221,28 +220,29 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * Draws the g-buffer to the screen for debugging.
 	 */
 	protected void debugDraw(){
-		this.drawTexture(0, this.gBuffer.getDepthBufferTexture(), "myTexture", this.defaultDeferredShader, 0, 0, .2f, .2f);
-		this.drawTexture(0, this.gBuffer.getColorBufferTexture(), "myTexture", this.defaultDeferredShader, .2f, 0f, .2f, .2f);
-		this.drawTexture(0, this.gBuffer.getNormalBufferTexture(), "myTexture", this.defaultDeferredShader, .4f, 0f, .2f, .2f);
-		this.drawTexture(0, this.gBuffer.getUVBufferTexture(), "myTexture", this.defaultDeferredShader, .6f, 0f, .2f, .2f);
+		this.drawTexture(0, this.gBuffer.getDepthBufferTexture(), "myTexture", this.debugShader, 0, 0, .2f, .2f);
+		this.drawTexture(0, this.gBuffer.getColorBufferTexture(), "myTexture", this.debugShader, .2f, 0f, .2f, .2f);
+		this.drawTexture(0, this.gBuffer.getNormalBufferTexture(), "myTexture", this.debugShader, .4f, 0f, .2f, .2f);
+		this.drawTexture(0, this.gBuffer.getUVBufferTexture(), "myTexture", this.debugShader, .6f, 0f, .2f, .2f);
 	}
 	
 	/**
-	 * Binds a texture and assigns it to a specified texture in a shader.
-	 * @param textureLocation the OpenGL texture index that should be used for this texture.
-	 * @param textureId the OpenGL reference to the texture.
+	 * Activates a given texture unit, binds a texture to it, and assigns the texture unit 
+	 * to a specified texture in a shader.
+	 * @param textureLocation the OpenGL texture unit that should be used for this texture.
+	 * @param textureId the OpenGL reference to the texture to be bound.
 	 * @param sampler2DName name of the texture in the shader program.
 	 * @param shader the shader program object.
 	 */
 	public void bindTexture(int textureLocation, int textureId, String sampler2DName, GLShader shader){
-		this.useShader((shader == null) ? this.defaultDeferredShader: shader);
+		this.useShader(shader);
 		//if(textureId != this.prevTexture || textureLocation != this.prevTexLocation){
 			gl.glActiveTexture(GL3.GL_TEXTURE0+textureLocation);
 			gl.glEnable(GL3.GL_TEXTURE_2D);
 			gl.glBindTexture(GL3.GL_TEXTURE_2D, textureId);
 			gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_LINEAR);
 			gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_LINEAR);
-			gl.glUniform1i(gl.glGetUniformLocation(((shader == null) ? this.defaultDeferredShader: shader).programId(), sampler2DName), textureLocation);
+			gl.glUniform1i(gl.glGetUniformLocation(shader.programId(), sampler2DName), textureLocation);
 		//}
 	}
 	
@@ -259,8 +259,7 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * @param height 0 means no height, 1 means the full screen height
 	 */
 	public void drawTexture(int texturelocation, int textureId, String sampler2DName, GLShader shader,
-			float x, float y, float width, float height){
-		if(shader == null) shader = this.defaultDeferredShader;
+			float x, float y, float width, float height){		
 		this.bindTexture(texturelocation, textureId, sampler2DName, shader);
 		this.changeCameraMode();
 		this.drawTexture(x, y, width, height);
@@ -336,7 +335,6 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * Uses the default shader.
 	 */
 	public void useDefaultShader() {
-		this.useShader(defaultDeferredShader);
 	}
 	
 	/**
@@ -450,8 +448,8 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.mTemp.set(sceneManager.getCamera().getCameraMatrix());
 		this.mTemp.mul(transformation);
 
-		ShaderUtils.setUniformMatrix4f(this, this.prevUsedShader, "modelview", this.mTemp);
-		ShaderUtils.setUniformMatrix4f(this, this.prevUsedShader, "projection", this.sceneManager.getFrustum().getProjectionMatrix());
+		GLUtils.setUniformMatrix4f(this, this.prevUsedShader, "modelview", this.mTemp);
+		GLUtils.setUniformMatrix4f(this, this.prevUsedShader, "projection", this.sceneManager.getFrustum().getProjectionMatrix());
 	}
 
 	/**
@@ -470,69 +468,20 @@ public class GLDeferredRenderContext implements RenderContext{
 				this.bindTexture(0, ((GLTexture)m.diffuseMap).getId(), "myTexture", (GLShader) m.shader);			
 		}
 	}
-	
-	/**
-	 * Creates a new shader object.
-	 */
+
+	@Override
 	public Shader makeShader() {
-		return new GLShader(gl);
+		return GLUtils.makeShader();
 	}
 
-	/**
-	 * Creates a new texture object.
-	 */
+	@Override
 	public Texture makeTexture() {
-		GLTexture tex = new GLTexture(gl);
-		return tex;
+		return GLUtils.makeTexture();
 	}
 
-	/**
-	 * Creates a new vertex data object.
-	 */
+	@Override
 	public VertexData makeVertexData(int n) {
-		return new GLVertexData(n);
+		return GLUtils.makeVertexData(n);
 	}
 	
-	/**
-	 * Loads vertex and fragment shader from the given path.
-	 * Vertex shader has to own the ending *.vert, fragment shader *.frag.
-	 * @param path
-	 * @return
-	 */
-	public GLShader loadShader(String path){
-		return loadShader(path+".vert", path+".frag");
-	}
-	
-	/**
-	 * Loads vertex and fragment shader from the given paths.
-	 * @return
-	 */
-	public GLShader loadShader(String vertexPath, String fragmentPath){
-		try {
-			GLShader shader = (GLShader) makeShader();
-			shader.load(vertexPath, fragmentPath);
-			return shader;
-		} catch (Exception e) {
-			System.err.println("Problem with shader: "+vertexPath+", "+fragmentPath);
-			System.err.println(e.getMessage());
-			return null;
-		}
-	}
-	
-	/**
-	 * Loads the texture from the given path
-	 * @param path
-	 * @return <code>null</code> if the texture couldn't be loaded or the GLTexture reference.
-	 */
-	public GLTexture loadTexture(String path){
-		GLTexture tex = null;
-		try {
-			tex = (GLTexture) this.makeTexture();
-			tex.load(path);
-		} catch (IOException e) {
-			System.err.println("Problem with texture:");
-			System.err.println(e.getMessage());
-		}
-		return tex;
-	}
 }

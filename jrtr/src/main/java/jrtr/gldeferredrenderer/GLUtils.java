@@ -8,13 +8,19 @@ import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 
 import jrtr.glrenderer.GLShader;
+import jrtr.glrenderer.GLTexture;
+import jrtr.glrenderer.GLVertexData;
 import jrtr.Light;
+import jrtr.Shader;
+import jrtr.Texture;
+import jrtr.VertexData;
 import jrtr.gldeferredrenderer.GLDeferredRenderContext;
 import static jrtr.gldeferredrenderer.GLDeferredRenderContext.gl;
 
@@ -25,7 +31,7 @@ import static jrtr.gldeferredrenderer.GLDeferredRenderContext.gl;
  * @author Heinrich Reich
  *
  */
-public class ShaderUtils {
+public class GLUtils {
 	
 	private final static float[] lightColor = new float[3000], 
 			lightPos = new float[3000],
@@ -213,6 +219,71 @@ public class ShaderUtils {
 	
 	public static IntBuffer newIntBuffer (int numInts) {
 		return IntBuffer.allocate(numInts);
+	}
+	
+	/**
+	 * Creates a new shader object.
+	 */
+	public static Shader makeShader() {
+		return new GLShader(gl);
+	}
+
+	/**
+	 * Creates a new texture object.
+	 */
+	public static Texture makeTexture() {
+		GLTexture tex = new GLTexture(gl);
+		return tex;
+	}
+
+	/**
+	 * Creates a new vertex data object.
+	 */
+	public static VertexData makeVertexData(int n) {
+		return new GLVertexData(n);
+	}
+	
+	/**
+	 * Loads vertex and fragment shader from the given path.
+	 * Vertex shader has to own the ending *.vert, fragment shader *.frag.
+	 * @param path
+	 * @return
+	 */
+	public static GLShader loadShader(String path){
+		return loadShader(path+".vert", path+".frag");
+	}
+	
+	/**
+	 * Loads vertex and fragment shader from the given paths.
+	 * @return
+	 */
+	public static GLShader loadShader(String vertexPath, String fragmentPath){
+		try {
+			GLShader shader = (GLShader) makeShader();
+			shader.load(vertexPath, fragmentPath);
+			return shader;
+		} catch (Exception e) {
+			System.err.println("Problem with shader: "+vertexPath+", "+fragmentPath);
+			System.err.println(e.getMessage());
+			return null;
+		}
+	}
+	
+	/**
+	 * Loads the texture from the given path
+	 * @param path
+	 * @return <code>null</code> if the texture couldn't be loaded or the GLTexture reference.
+	 */
+	public static GLTexture loadTexture(String path){
+		GLTexture tex = null;
+		try {
+			tex = (GLTexture) makeTexture();
+			tex.load(path);
+		} catch (IOException e) {
+			System.err.println("Problem with texture:");
+			System.err.println(e.getMessage());
+		}
+		return tex;
 	}
 
 }

@@ -21,9 +21,9 @@ public class DefaultSecondPassDrawer implements SecondPassDrawer{
 	protected GLShader shader;
 	protected GLDeferredRenderContext renderContext;
 		
-	public DefaultSecondPassDrawer(GLShader shader, GLDeferredRenderContext context){
+	public DefaultSecondPassDrawer(GLDeferredRenderContext context){
+		this.shader = GLUtils.loadShader("../jrtr/shaders/deferredShaders/default");
 		this.renderContext = context;
-		this.shader = shader;
 	}
 	
 	@Override
