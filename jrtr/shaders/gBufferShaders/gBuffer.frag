@@ -6,6 +6,7 @@ in vec4 normalOut;
 in vec4 colorOut;
 in vec4 texcoordOut;
 
+// Specify the buffer id for writing each output
 layout(location = 0) out vec4 normalColor;
 layout(location = 1) out vec4 colorColor;
 layout(location = 2) out vec4 texcoordColor;

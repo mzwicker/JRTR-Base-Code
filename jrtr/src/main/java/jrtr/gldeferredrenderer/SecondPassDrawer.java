@@ -7,8 +7,8 @@ import jrtr.Frustum;
 import jrtr.Light;
 
 /**
- * An interface for applying the logic of a renderer which gets called
- * if the first step in the deferred rendering process is done.
+ * An interface for applying a deferred shading pass. 
+ * 
  * @author Heinrich Reich
  *
  */

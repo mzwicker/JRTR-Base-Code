@@ -5,7 +5,6 @@ import java.nio.FloatBuffer;
 import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.ListIterator;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import javax.media.opengl.GL3;
 import javax.media.opengl.GLAutoDrawable;
@@ -16,8 +15,8 @@ import jrtr.glrenderer.*;
 import jrtr.*;
 
 /**
- * A context for rendering a scene in two steps and afterwards processing
- * the scene with the registered post-processors.
+ * An OpenGL rendering context for rendering with deferred shading, followed by
+ * optional post-processing.
  * @author Heinrich Reich
  *
  */
@@ -44,21 +43,6 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * The buffer, containing the final texture. 
 	 */
 	private FrameBuffer finalBuffer;
-	
-	/**
-	 * The shader manager, used to store and dispose all created shaders if we are done with the application.
-	 */
-	public final ShaderManager shaderManager = new ShaderManager();
-	
-	/**
-	 * The texture manager, used to store and dispose all created textures.
-	 */
-	public final TextureManager textureManager = new TextureManager();
-	
-	/**
-	 * The frame buffer manager, used to store and disposed all created frame buffers.
-	 */
-	public final FrameBufferManager frameBufferManager = new FrameBufferManager();
 	
 	/**
 	 * Temp. variables for re-doing the camera mode.
@@ -115,7 +99,6 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.finalBuffer.resize(drawable.getWidth(), drawable.getHeight());
 		for(PostProcessor proc: this.postProcessors)
 			proc.resize(drawable.getWidth(), drawable.getHeight());
-		this.frameBufferManager.resize(drawable.getWidth(), drawable.getHeight());
 	}
 
 	/**
@@ -309,9 +292,6 @@ public class GLDeferredRenderContext implements RenderContext{
 	public void dispose(){
 		this.gBuffer.dispose();
 		this.finalBuffer.dispose();
-		this.shaderManager.dispose(gl);
-		this.textureManager.dispose(gl);
-		this.frameBufferManager.dispose(gl);
 		for(GLVertexArrayObject vd: vertexArrayObjects){
 			vd.dispose();
 		}
@@ -531,7 +511,6 @@ public class GLDeferredRenderContext implements RenderContext{
 		try {
 			GLShader shader = (GLShader) makeShader();
 			shader.load(vertexPath, fragmentPath);
-			this.shaderManager.addShader(vertexPath, fragmentPath, shader);
 			return shader;
 		} catch (Exception e) {
 			System.err.println("Problem with shader: "+vertexPath+", "+fragmentPath);

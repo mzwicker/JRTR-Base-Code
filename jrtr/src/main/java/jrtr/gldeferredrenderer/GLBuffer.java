@@ -64,6 +64,8 @@ public abstract class GLBuffer {
 	 * Initialize the OpenGL framebuffer object (FBO). First we generate a framebuffer object 
 	 * and bind it as the current buffer. Then we create as many textures as specified in 
 	 * {@link GLBuffer#GLBuffer}. If needed, we also create a depth buffer for the render target.
+	 * Later (after we rendered into the FBO), we can read from these textures via the
+	 * usual OpenGL functionality. 
 	 * The abstract method {@link GLBuffer#handleCreationError} gets called here.
 	 */
 	private void init(){
@@ -78,6 +80,8 @@ public abstract class GLBuffer {
 	    for (int i = 0 ; i < textures.capacity() ; i++) {
 	    	gl.glBindTexture(GL3.GL_TEXTURE_2D, this.textures.get(i));
 	    	gl.glTexImage2D(GL3.GL_TEXTURE_2D, 0, format, width, height, 0, GL3.GL_RGB, GL3.GL_FLOAT, null);
+	    	// Each texture will be linked to a buffer index i; the corresponding index is used in the shader
+	    	// using the directive layout(location = i) to address this texture 
 	    	gl.glFramebufferTexture2D(GL3.GL_DRAW_FRAMEBUFFER, GL3.GL_COLOR_ATTACHMENT0 + i, GL3.GL_TEXTURE_2D, this.textures.get(i), 0);
 	    }
 	    
