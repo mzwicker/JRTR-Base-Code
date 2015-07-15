@@ -111,9 +111,10 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * @param drawable
 	 */
 	public void display(GLAutoDrawable drawable){
-				
+
 		// Render to g-buffer
 		this.renderToGBuffer(drawable);
+	
 		
 		// Store the current camera for later use by deferred shader and post processors
 		this.secondPassDrawer.managePerspective(gl, this.sceneManager.getCamera(), this.sceneManager.getFrustum());
@@ -176,6 +177,19 @@ public class GLDeferredRenderContext implements RenderContext{
 		while (iterator.hasNext()) {
 			RenderItem r = iterator.next();
 			if (r.getShape() != null) {
+				
+				// Pass material properties to g-buffer shader
+				// Note we are not activating the material shader, 
+				// since we just want to draw into the g-buffer at 
+				// this point. If the material doesn't have its own
+				// texture, make sure to pass the default OpenGL 
+				// texture 0, which is black
+				Material m = r.getShape().getMaterial();
+				if(m != null && m.diffuseMap != null)
+					this.bindTexture(0, ((GLTexture)m.diffuseMap).getId(), "diffuseMap", (GLShader) this.defaultGBufferShader);			
+				else
+					this.bindTexture(0, 0, "diffuseMap", (GLShader) this.defaultGBufferShader);			
+
 				draw(r);
 			}
 		}
@@ -242,14 +256,12 @@ public class GLDeferredRenderContext implements RenderContext{
 	 */
 	public void bindTexture(int textureLocation, int textureId, String sampler2DName, GLShader shader){
 		this.useShader(shader);
-		//if(textureId != this.prevTexture || textureLocation != this.prevTexLocation){
-			gl.glActiveTexture(GL3.GL_TEXTURE0+textureLocation);
-			gl.glEnable(GL3.GL_TEXTURE_2D);
-			gl.glBindTexture(GL3.GL_TEXTURE_2D, textureId);
-			gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_LINEAR);
-			gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_LINEAR);
-			gl.glUniform1i(gl.glGetUniformLocation(shader.programId(), sampler2DName), textureLocation);
-		//}
+		gl.glActiveTexture(GL3.GL_TEXTURE0+textureLocation);
+		gl.glEnable(GL3.GL_TEXTURE_2D);
+		gl.glBindTexture(GL3.GL_TEXTURE_2D, textureId);
+		gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_LINEAR);
+		gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_LINEAR);
+		gl.glUniform1i(gl.glGetUniformLocation(shader.programId(), sampler2DName), textureLocation);
 	}
 	
 	/**
@@ -367,21 +379,6 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * @param renderItem the object that needs to be drawn
 	 */
 	protected void draw(RenderItem renderItem) {
-
-		// Pass material properties to g-buffer shader
-		// Note we are not activating the material shader, 
-		// since we just want to draw into the g-buffer at 
-		// this point
-		Material m = renderItem.getShape().getMaterial();
-		if(m != null && m.diffuseMap != null)
-			this.bindTexture(0, ((GLTexture)m.diffuseMap).getId(), "myTexture", (GLShader) this.defaultGBufferShader);			
-		else {
-//			this.bindTexture(0, 0/*((GLTexture)m.diffuseMap).getId()*/, "myTexture", (GLShader) this.defaultGBufferShader);			
-//			gl.glActiveTexture(GL3.GL_TEXTURE0);
-//			gl.glEnable(GL3.GL_TEXTURE_2D);
-//			gl.glBindTexture(GL3.GL_TEXTURE_2D, 1);
-	
-		}
 		
 		GLVertexData vertexData = ((GLVertexData) renderItem.getShape().getVertexData());
 		if (vertexData.getVAO() == null) {
