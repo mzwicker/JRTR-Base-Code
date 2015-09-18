@@ -30,7 +30,7 @@ public class simple
 	 * provide a call-back function for initialization. Here we construct
 	 * a simple 3D scene and start a timer task to generate an animation.
 	 */ 
-	public final static class SimpleRenderPanel extends GLDeferredRenderPanel
+	public final static class SimpleRenderPanel extends GLRenderPanel
 	{
 		/**
 		 * Initialization call-back. We initialize our renderer here.
