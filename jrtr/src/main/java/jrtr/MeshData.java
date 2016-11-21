@@ -165,7 +165,6 @@ public class MeshData {
 			p++;
 		}
 
-		//VertexData data = new VertexData(vertexTable.size()); //marco: fixed
 		VertexData data = renderContext.makeVertexData(vertexTable.size());
 		data.addElement(pos, VertexData.Semantic.POSITION, 3);
 		data.addElement(col, VertexData.Semantic.COLOR, 3);
@@ -186,53 +185,18 @@ public class MeshData {
 		data.addIndices(i);
 		this.vertexData = data;
 
-		// currently the normals are set to be face normals
-		 vertexData.addElement(getFaceNormals(), VertexData.Semantic.NORMAL, 3); 
+	//	vertexData.addElement(getFaceNormals(), VertexData.Semantic.NORMAL, 3); 
 	}
 
 
 	/**
+	 * (DEPRECATED)
 	 * Creates a list of faceNormals that can be used in a vertexData. For each
 	 * vertex in a face, the x, y and z coordinates of the face normal is added
 	 * to the array
 	 * 
 	 * @return array containing face normals
 	 */
-	
-	
-	// old code - buggy since it returns the face normals not the vertex normals!
-	public float[] getFaceNormalsOLD() {
-		List<Float> faceNormals = new ArrayList<Float>();
-		
-		for (Face f : faceTable) {
-			Vector3f v = new Vector3f();
-			List<Integer> verts = findVertices(f);
-			for (int i = 0; i < verts.size(); i++) {
-				Vector3f v1 = new Vector3f(vertexTable.get(verts.get(i)).position);
-				v1.sub(vertexTable.get(verts.get((i + verts.size() - 1) % verts.size())).position);
-				Vector3f v2 = new Vector3f(vertexTable.get(verts.get(i)).position);
-				v2.sub(vertexTable.get(verts.get((i + 1) % verts.size())).position);
-				v1.cross(v2, v1);
-				v.add(v1);
-			}
-			v.scale(1f / verts.size());
-			v.normalize();
-			
-			for (int i = 0; i < verts.size(); i++) {
-				faceNormals.add(v.x);
-				faceNormals.add(v.y);
-				faceNormals.add(v.z);
-			}
-		}
-		float[] faceNormalArray = new float[faceNormals.size()];
-		for (int i = 0; i < faceNormals.size(); i++) {
-			faceNormalArray[i] = faceNormals.get(i);
-		}
-		return faceNormalArray;
-	}
-	
-	
-	//New approach - thanks to luke giant ;-) marco: fixed
 	public float[] getFaceNormals() {
 		HashMap<Vertex, ArrayList<Vector3f>> vertexFaceNormals = new HashMap<Vertex, ArrayList<Vector3f>>();
 		for (Face f : faceTable) {
@@ -405,99 +369,7 @@ public class MeshData {
 	 */
 	public void loop() {
 		//TODO: this is the part you should implement :-)
-		
-		
-		//luke giant solution
-		List<Vertex> newVertexTable = new ArrayList<Vertex>(vertexTable);
-		int[] indices = new int[faceTable.size()*4*3];
-		int ic = 0;
-		HashMap<Vertex, HashMap<Vertex,Integer>> calculatedV = new HashMap<Vertex, HashMap<Vertex,Integer>>();
-		
-		
-		//subdivision, smoothing new point & reconnecting
-		int newIV = vertexTable.size();
-		Vertex v1, v2, v3, v4, vN1; 
-		Integer iV;
-		for(Face f: faceTable){
-			List<Integer> vs = findVertices(f);
-			int[] ps = new int[6];
-			int pc = 0;
-			for(int i=0; i<3; i++){
-				v1 = vertexTable.get(vs.get(i));
-				v2 = vertexTable.get(vs.get((i+1)%3));
-				iV = null;
-				if(calculatedV.get(v2)!=null)
-					iV = calculatedV.get(v2).get(v1);
-				if(iV == null){
-					List<Vertex> v1vs = findVertices(v1);
-					List<Vertex> v2vs = findVertices(v2);
-					v2vs.retainAll(v1vs);
-					v3 = v2vs.get(0);
-					v4 = v2vs.get(1);
-					
-					vN1 = new Vertex(v1);
-					vN1.position.add(v2.position);
-					vN1.position.scale(3);
-					vN1.position.add(v3.position);
-					vN1.position.add(v4.position);
-					vN1.position.scale(1/8f);
-					
-					if(/*colorInterpolation*/ true){
-						vN1.color.add(v2.color);
-						vN1.color.scale(3);
-						vN1.color.add(v3.color);
-						vN1.color.add(v4.color);
-						vN1.color.scale(1/8f);
-					}
-					
-					newVertexTable.add(vN1);
-					iV = newIV;
-					if(calculatedV.get(v1) == null)
-						calculatedV.put(v1, new HashMap<Vertex,Integer>());
-					calculatedV.get(v1).put(v2, newIV++);
-				}
-				ps[pc++] = vs.get(i);
-				ps[pc++] = iV;
-			}
-			
-			int[] ips = {ps[0],ps[1],ps[5],   ps[1],ps[2],ps[3],  ps[3],ps[4],ps[5],  ps[1],ps[3],ps[5]};
 
-			for(int i=0; i < ips.length; i++)
-				indices[ic++] = ips[i];
-		}
-
-		
-		//smoothing old points
-		Vertex copieV;
-		Vector3f neighbors, neighborsColor;
-		float beta;
-		int index;
-		for(Vertex v: vertexTable){
-			neighbors = new Vector3f(0,0,0);
-			neighborsColor = new Vector3f(0,0,0);
-			copieV = new Vertex(v);
-			List<Vertex> vs = findVertices(v);
-			if(vs.size()>3) beta = 3/(float)(8*vs.size()); else beta = 3/16f;
-			for(Vertex neighbor:vs){
-				neighbors.add(neighbor.position);
-				neighborsColor.add(neighbor.color);
-			}
-			neighbors.scale(beta);
-			neighborsColor.scale(beta);
-			copieV.position.scale(1-beta*vs.size());
-			copieV.position.add(neighbors);
-			if(/*colorInterpolation*/ true){
-				copieV.color.scale(1-beta*vs.size());
-				copieV.color.add(neighborsColor);
-			}
-			index = newVertexTable.indexOf(v);
-			newVertexTable.set(index, copieV);
-		}
-		
-		
-		createMesh(newVertexTable, indices);
-		
-	//	return vertexData;		
 	}
 	
 	
