@@ -15,7 +15,7 @@ import javax.media.opengl.GL3;
 public abstract class GLBuffer {
 	
 	// references to the different OpenGL objects
-	protected IntBuffer frameBuffer, drawBuffers, textures, depthBuffer;
+	public IntBuffer frameBuffer, drawBuffers, textures, depthBuffer;
 	// format and render target index
 	public final int format, renderTargets;
 	// temporary indices of read and written fbo
@@ -75,14 +75,18 @@ public abstract class GLBuffer {
 	    
 	    // Create references for the FBO textures
 	    gl.glGenTextures(textures.capacity(), textures);
-	    
+	    	    
 	    // Attach textures to the FBO
 	    for (int i = 0 ; i < textures.capacity() ; i++) {
 	    	gl.glBindTexture(GL3.GL_TEXTURE_2D, this.textures.get(i));
-	    	gl.glTexImage2D(GL3.GL_TEXTURE_2D, 0, format, width, height, 0, GL3.GL_RGB, GL3.GL_FLOAT, null);
+	    	gl.glTexImage2D(GL3.GL_TEXTURE_2D, 0, format, width, height, 0, GL3.GL_RGBA, GL3.GL_FLOAT, null);
+	    	gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_WRAP_S, GL3.GL_CLAMP_TO_EDGE);
+	        gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_WRAP_T, GL3.GL_CLAMP_TO_EDGE);
+	        gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_NEAREST);
+	        gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_NEAREST);
 	    	// Each texture will be linked to a buffer index i; the corresponding index is used in the shader
 	    	// using the directive layout(location = i) to address this texture 
-	    	gl.glFramebufferTexture2D(GL3.GL_DRAW_FRAMEBUFFER, GL3.GL_COLOR_ATTACHMENT0 + i, GL3.GL_TEXTURE_2D, this.textures.get(i), 0);
+	    	gl.glFramebufferTexture2D(GL3.GL_FRAMEBUFFER, GL3.GL_COLOR_ATTACHMENT0 + i, GL3.GL_TEXTURE_2D, this.textures.get(i), 0);
 	    }
 	    
 	    // Depth texture

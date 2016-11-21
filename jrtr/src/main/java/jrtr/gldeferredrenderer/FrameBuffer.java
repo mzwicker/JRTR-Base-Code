@@ -11,7 +11,7 @@ import javax.media.opengl.GL3;
 public class FrameBuffer extends GLBuffer{
 	
 	
-	FrameBuffer(GL3 gl, int width, int height, boolean useDepthBuffer) throws RuntimeException{
+	public FrameBuffer(GL3 gl, int width, int height, boolean useDepthBuffer) throws RuntimeException{
 		super(gl, width, height, 1, useDepthBuffer, GL3.GL_RGB8);
 	}
 	

@@ -14,6 +14,7 @@ public class Material {
 	public Vector3f ambient;
 	public float shininess;
 	public Shader shader;
+	public Texture texture;
 	
 	public Material()
 	{
@@ -27,5 +28,6 @@ public class Material {
 		ambientMap = null;
 		alphaMap = null;
 		shader = null;
+		texture = null;
 	}
 }

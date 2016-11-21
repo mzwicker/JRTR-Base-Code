@@ -39,4 +39,9 @@ public class Frustum {
 	{
 		return projectionMatrix;
 	}
+	
+	public void setProjectionMatrix(Matrix4f m)
+	{
+		this.projectionMatrix = m;
+	}
 }
