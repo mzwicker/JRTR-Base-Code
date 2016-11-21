@@ -17,6 +17,6 @@
 			<attribute name="maven.pomderived" value="true"/>
 		</attributes>
 	</classpathentry>
-	<classpathentry kind="lib" path="D:/Computergrafik/Computergrafik-Solutions/simpleOpenVR/dll"/>
+	<classpathentry kind="lib" path="/jopenvr/dll"/>
 	<classpathentry kind="output" path="target/classes"/>
 </classpath>
