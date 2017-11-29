@@ -3,7 +3,7 @@ package jrtr.gldeferredrenderer;
 import java.util.ArrayList;
 import java.util.Iterator;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 import javax.vecmath.Matrix4f;
 
 import jrtr.Camera;

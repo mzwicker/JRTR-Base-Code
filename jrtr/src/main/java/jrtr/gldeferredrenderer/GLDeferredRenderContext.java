@@ -6,8 +6,8 @@ import java.nio.IntBuffer;
 import java.util.ArrayList;
 import java.util.ListIterator;
 
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 
@@ -96,10 +96,10 @@ public class GLDeferredRenderContext implements RenderContext{
 	 * @param drawable
 	 */
 	public void resize(GLAutoDrawable drawable){
-		this.gBuffer.resize(drawable.getWidth(), drawable.getHeight());
-		this.finalBuffer.resize(drawable.getWidth(), drawable.getHeight());
+		this.gBuffer.resize(drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
+		this.finalBuffer.resize(drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
 		for(PostProcessor proc: this.postProcessors)
-			proc.resize(drawable.getWidth(), drawable.getHeight());
+			proc.resize(drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
 	}
 
 	/**
@@ -146,7 +146,7 @@ public class GLDeferredRenderContext implements RenderContext{
 		this.beginFrame();
 		this.finalBuffer.beginRead(0);
 		gl.glBlitFramebuffer(0, 0, this.finalBuffer.getWidth(), this.finalBuffer.getHeight(),  0, 0, 
-			drawable.getWidth(), drawable.getHeight(), GL3.GL_COLOR_BUFFER_BIT, GL3.GL_LINEAR);
+			drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), GL3.GL_COLOR_BUFFER_BIT, GL3.GL_LINEAR);
 		this.finalBuffer.endRead();
 		
 		// This draws the g-buffer to the screen for debugging

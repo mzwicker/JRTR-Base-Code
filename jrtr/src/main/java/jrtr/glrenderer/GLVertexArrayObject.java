@@ -2,7 +2,7 @@ package jrtr.glrenderer;
 
 import java.nio.IntBuffer;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 
 /**
  * A utility class to encapsulate an OpenGL "vertex array object" (VAO).

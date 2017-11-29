@@ -1,6 +1,6 @@
 package jrtr.gldeferredrenderer;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 
 /**
  * A GLBuffer which contains 5 textures:

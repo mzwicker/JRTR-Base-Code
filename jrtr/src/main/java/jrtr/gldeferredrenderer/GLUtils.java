@@ -1,9 +1,9 @@
 package jrtr.gldeferredrenderer;
 
-import static javax.media.opengl.GL2ES2.*;
-import static javax.media.opengl.GL2ES3.*;
+import static com.jogamp.opengl.GL2ES2.*;
+import static com.jogamp.opengl.GL2ES3.*;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 import javax.vecmath.Matrix4f;
 import javax.vecmath.Vector3f;
 import javax.vecmath.Vector4f;

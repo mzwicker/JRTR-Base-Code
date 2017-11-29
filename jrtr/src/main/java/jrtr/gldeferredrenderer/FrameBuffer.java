@@ -1,6 +1,6 @@
 package jrtr.gldeferredrenderer;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 
 /**
  * A simple GLBuffer, which contains only one texture.

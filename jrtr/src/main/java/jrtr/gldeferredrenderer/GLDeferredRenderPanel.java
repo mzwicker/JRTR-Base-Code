@@ -2,11 +2,11 @@ package jrtr.gldeferredrenderer;
 
 import java.awt.Component;
 
-import javax.media.opengl.GLAutoDrawable;
-import javax.media.opengl.GLCapabilities;
-import javax.media.opengl.GLEventListener;
-import javax.media.opengl.GLProfile;
-import javax.media.opengl.awt.GLCanvas;
+import com.jogamp.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GLCapabilities;
+import com.jogamp.opengl.GLEventListener;
+import com.jogamp.opengl.GLProfile;
+import com.jogamp.opengl.awt.GLCanvas;
 
 import jrtr.RenderContext;
 import jrtr.RenderPanel;
@@ -47,7 +47,7 @@ public abstract class GLDeferredRenderPanel implements RenderPanel{
 				// Make an OpenGL rendering context for deferred shading
 				GLDeferredRenderContext.gl = drawable.getGL().getGL3();
 				renderContext = new GLDeferredRenderContext();
-				renderContext.init(drawable.getWidth(), drawable.getHeight());
+				renderContext.init(drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
 				
 				// Invoke the user-provided call back function
 				renderPanel.init(renderContext);

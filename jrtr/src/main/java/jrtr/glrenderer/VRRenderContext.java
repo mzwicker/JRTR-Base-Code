@@ -5,8 +5,8 @@ import java.nio.IntBuffer;
 import java.util.ListIterator;
 import java.util.Iterator;
 
-import javax.media.opengl.GL3;
-import javax.media.opengl.GLAutoDrawable;
+import com.jogamp.opengl.GL3;
+import com.jogamp.opengl.GLAutoDrawable;
 import javax.vecmath.*;
 import jrtr.*;
 import jopenvr.JOpenVRLibrary;
@@ -90,11 +90,11 @@ public class VRRenderContext implements RenderContext {
 		}
 		useShader(defaultShader);
 		
-		vrBuffer = new FrameBuffer(gl, drawable.getWidth(), drawable.getHeight(), true);
+		vrBuffer = new FrameBuffer(gl, drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), true);
 	}
 
 	public void resize(GLAutoDrawable drawable){
-		this.vrBuffer.resize(drawable.getWidth(), drawable.getHeight());
+		this.vrBuffer.resize(drawable.getSurfaceWidth(), drawable.getSurfaceHeight());
 	}
 	
 	/**
@@ -163,7 +163,7 @@ public class VRRenderContext implements RenderContext {
 			beginFrame();
 			vrBuffer.beginRead(0);
 			gl.glBlitFramebuffer(0, 0, vrBuffer.getWidth(), vrBuffer.getHeight(),  0, 0, 
-				drawable.getWidth(), drawable.getHeight(), GL3.GL_COLOR_BUFFER_BIT, GL3.GL_LINEAR);
+				drawable.getSurfaceWidth(), drawable.getSurfaceHeight(), GL3.GL_COLOR_BUFFER_BIT, GL3.GL_LINEAR);
 			vrBuffer.endRead();
 			this.endFrame();
 			

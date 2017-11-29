@@ -1,7 +1,7 @@
 package jrtr.gldeferredrenderer;
 
 import java.util.Iterator;
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 import jrtr.Camera;
 import jrtr.Frustum;
 import jrtr.Light;

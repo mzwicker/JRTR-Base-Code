@@ -2,7 +2,7 @@ package jrtr.gldeferredrenderer;
 
 import java.nio.IntBuffer;
 
-import javax.media.opengl.GL3;
+import com.jogamp.opengl.GL3;
 
 /**
  * A simple class for creating, reading, and writing to an OpenGL framebuffer object (FBO).
