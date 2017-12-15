@@ -9,13 +9,11 @@ import java.util.ListIterator;
 import javax.vecmath.Vector2f;
 import javax.vecmath.Vector3f;
 
-import jrtr.glrenderer.GLVertexData;
-
 /**
  * This class represents a geometric object that is stored in a mesh structure.
  * Each vertix knows its adjacent vertices, edges and faces
  * 
- * @author CGG\indermühle
+ * @author CGG\indermuehle
  * 
  */
 public class MeshData {
