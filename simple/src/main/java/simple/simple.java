@@ -2,6 +2,7 @@ package simple;
 
 import jrtr.*;
 import jrtr.glrenderer.*;
+import jrtr.swrenderer.*;
 import jrtr.gldeferredrenderer.*;
 
 import javax.swing.*;
@@ -11,8 +12,9 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 /**
- * Implements a simple application that opens a 3D rendering window and 
- * shows a rotating cube.
+ * Implements a simple 3D rendering application using the 3D rendering API 
+ * provided by the package {@link jrtr}. Opens a 3D rendering window and 
+ * shows a rotating cube. 
  */
 public class simple
 {	
