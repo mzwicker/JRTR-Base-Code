@@ -1,7 +1,4 @@
 package jrtr.glrenderer;
-
-import com.jogamp.opengl.GL3;
-
 import jrtr.VertexData;
 
 /**

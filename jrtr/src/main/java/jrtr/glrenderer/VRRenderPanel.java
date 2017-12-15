@@ -14,14 +14,8 @@ import java.nio.IntBuffer;
 import com.jogamp.newt.opengl.GLWindow;
 import com.jogamp.newt.awt.NewtCanvasAWT;
 
-import com.jogamp.opengl.GL3;
-import com.jogamp.opengl.GLAutoDrawable;
-import javax.vecmath.*;
-
 import jopenvr.JOpenVRLibrary;
 import jopenvr.VR_IVRCompositor_FnTable;
-import jopenvr.Texture_t;
-import jrtr.gldeferredrenderer.GLDeferredRenderContext;
 
 
 

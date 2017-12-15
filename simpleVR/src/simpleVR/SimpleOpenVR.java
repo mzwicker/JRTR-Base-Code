@@ -5,14 +5,9 @@ import jrtr.glrenderer.*;
 
 import javax.swing.*;
 
-import java.awt.event.MouseListener;
 import java.lang.reflect.Array;
-import java.awt.event.MouseEvent;
-
 import javax.vecmath.*;
-
 import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Implements a simple VR application that renders to an HMD via

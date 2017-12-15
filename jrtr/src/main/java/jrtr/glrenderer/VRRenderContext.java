@@ -13,9 +13,6 @@ import jopenvr.JOpenVRLibrary;
 import jopenvr.Texture_t;
 import jopenvr.VR_IVRCompositor_FnTable;
 import jrtr.gldeferredrenderer.FrameBuffer;
-import jrtr.gldeferredrenderer.GLDeferredRenderContext;
-//import jrtr.openvrrenderer.VRRenderPanel;
-
 
 /**
  * This class implements a {@link RenderContext} (a renderer) using OpenGL
