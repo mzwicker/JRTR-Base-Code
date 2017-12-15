@@ -1,3 +1,5 @@
+package simpleVR;
+
 import jrtr.*;
 import jrtr.glrenderer.*;
 

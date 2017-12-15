@@ -2,8 +2,6 @@ package simple;
 
 import jrtr.*;
 import jrtr.glrenderer.*;
-import jrtr.swrenderer.*;
-import jrtr.gldeferredrenderer.*;
 
 import javax.swing.*;
 import java.awt.event.*;
@@ -29,22 +27,73 @@ public class simple
 
 	/**
 	 * An extension of {@link GLRenderPanel} or {@link SWRenderPanel} to 
-	 * provide a call-back function for initialization. Here we construct
-	 * a simple 3D scene and start a timer task to generate an animation.
+	 * provide a call-back function for initialization. 
 	 */ 
 	public final static class SimpleRenderPanel extends GLRenderPanel
 	{
 		/**
-		 * Initialization call-back. We initialize our renderer here.
+		 * Initialization call-back. We initialize our renderer and scene here.
+		 * We construct a simple 3D scene consisting of a cube and start a timer 
+		 * task to generate an animation.
 		 * 
 		 * @param r	the render context that is associated with this render panel
 		 */
 		public void init(RenderContext r)
 		{
 			renderContext = r;
+										
+			// Make a scene manager and add the object
+			sceneManager = new SimpleSceneManager();
+			shape = new Shape(makeCube());
+			sceneManager.addShape(shape);
+
+			// Add the scene to the renderer
+			renderContext.setSceneManager(sceneManager);
 			
+			// Load some more shaders
+		    normalShader = renderContext.makeShader();
+		    try {
+		    	normalShader.load("../jrtr/shaders/normal.vert", "../jrtr/shaders/normal.frag");
+		    } catch(Exception e) {
+		    	System.out.print("Problem with shader:\n");
+		    	System.out.print(e.getMessage());
+		    }
+	
+		    diffuseShader = renderContext.makeShader();
+		    try {
+		    	diffuseShader.load("../jrtr/shaders/diffuse.vert", "../jrtr/shaders/diffuse.frag");
+		    } catch(Exception e) {
+		    	System.out.print("Problem with shader:\n");
+		    	System.out.print(e.getMessage());
+		    }
+
+		    // Make a material that can be used for shading
+			material = new Material();
+			material.shader = diffuseShader;
+			material.diffuseMap = renderContext.makeTexture();
+			try {
+				material.diffuseMap.load("../textures/plant.jpg");
+			} catch(Exception e) {				
+				System.out.print("Could not load texture.\n");
+				System.out.print(e.getMessage());
+			}
+
+			// Register a timer task
+		    Timer timer = new Timer();
+		    basicstep = 0.01f;
+		    currentstep = basicstep;
+		    timer.scheduleAtFixedRate(new AnimationTask(), 0, 10);
+		}
+
+		/**
+		 * Make a mesh for a cube.
+		 * 
+		 * @return vertexData the data representing the cube mesh
+		 */
+		private VertexData makeCube()
+		{
 			// Make a simple geometric object: a cube
-			
+		
 			// The vertex positions of the cube
 			float v[] = {-1,-1,1, 1,-1,1, 1,1,1, -1,1,1,		// front face
 				         -1,-1,-1, -1,-1,1, -1,1,1, -1,1,-1,	// left face
@@ -94,48 +143,8 @@ public class simple
 							 20,22,23, 20,21,22};	// bottom face
 
 			vertexData.addIndices(indices);
-								
-			// Make a scene manager and add the object
-			sceneManager = new SimpleSceneManager();
-			shape = new Shape(vertexData);
-			sceneManager.addShape(shape);
-
-			// Add the scene to the renderer
-			renderContext.setSceneManager(sceneManager);
 			
-			// Load some more shaders
-		    normalShader = renderContext.makeShader();
-		    try {
-		    	normalShader.load("../jrtr/shaders/normal.vert", "../jrtr/shaders/normal.frag");
-		    } catch(Exception e) {
-		    	System.out.print("Problem with shader:\n");
-		    	System.out.print(e.getMessage());
-		    }
-	
-		    diffuseShader = renderContext.makeShader();
-		    try {
-		    	diffuseShader.load("../jrtr/shaders/diffuse.vert", "../jrtr/shaders/diffuse.frag");
-		    } catch(Exception e) {
-		    	System.out.print("Problem with shader:\n");
-		    	System.out.print(e.getMessage());
-		    }
-
-		    // Make a material that can be used for shading
-			material = new Material();
-			material.shader = diffuseShader;
-			material.diffuseMap = renderContext.makeTexture();
-			try {
-				material.diffuseMap.load("../textures/plant.jpg");
-			} catch(Exception e) {				
-				System.out.print("Could not load texture.\n");
-				System.out.print(e.getMessage());
-			}
-
-			// Register a timer task
-		    Timer timer = new Timer();
-		    basicstep = 0.01f;
-		    currentstep = basicstep;
-		    timer.scheduleAtFixedRate(new AnimationTask(), 0, 10);
+			return vertexData;
 		}
 	}
 
@@ -163,7 +172,7 @@ public class simple
 	}
 
 	/**
-	 * A mouse listener for the main window of this application. This can be
+	 * A mouse listener for the main window. This can be
 	 * used to process mouse events.
 	 */
 	public static class SimpleMouseListener implements MouseListener
@@ -252,10 +261,14 @@ public class simple
 	}
 	
 	/**
-	 * The main function opens a 3D rendering window, implemented by the class
-	 * {@link SimpleRenderPanel}. {@link SimpleRenderPanel} is then called backed 
-	 * for initialization automatically. It then constructs a simple 3D scene, 
-	 * and starts a timer task to generate an animation.
+	 * The main function opens a window 3D rendering window, implemented by the class
+	 * {@link SimpleRenderPanel}. {@link SimpleRenderPanel#init} is then called backed 
+	 * for initialization automatically by the Java event dispatching thread (EDT), see
+	 * <a href="https://stackoverflow.com/questions/7217013/java-event-dispatching-thread-explanation" target="_blank">
+	 * this discussion on stackoverflow</a> and <a href="https://en.wikipedia.org/wiki/Event_dispatching_thread" target="_blank">
+	 * this explanation on wikipedia</a>. Additional event listeners are added to handle mouse
+	 * and keyboard events from the EDT. {@link SimpleRenderPanel#init}
+	 * constructs a simple 3D scene, and starts a timer task to generate an animation.
 	 */
 	public static void main(String[] args)
 	{		
