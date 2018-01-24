@@ -37,6 +37,11 @@ public class SimpleSceneManager implements SceneManagerInterface {
 		shapes.add(shape);
 	}
 	
+	public boolean removeShape(Shape shape)
+	{
+		return shapes.remove(shape);
+	}
+	
 	public void addLight(Light light)
 	{
 		lights.add(light);
