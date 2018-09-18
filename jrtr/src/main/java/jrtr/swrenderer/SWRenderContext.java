@@ -228,8 +228,13 @@ public class SWRenderContext implements RenderContext {
 				int vy = (int)(positions[i][1]/positions[i][3]);
 							
 				if(vx>=0 && vx<width && vy>=0 && vy<height)
+				{
 					// Draw the pixel using the vertex color.
-					colorBuffer.setRGB(vx, vy, ((int)(255.f*colors[i][0]) << 16) | ((int)(255.f*colors[i][1]) << 8) | ((int)(255.f*colors[i][2])));
+					// colorBuffer.setRGB(vx, vy, ((int)(255.f*colors[i][0]) << 16) | ((int)(255.f*colors[i][1]) << 8) | ((int)(255.f*colors[i][2])));
+					
+					// Draw vertices in white for better visibility
+					colorBuffer.setRGB(vx, vy, ((int)(255) << 16) | ((int)(255) << 8) | ((int)(255)));
+				}
 			}
 		}
 	}
