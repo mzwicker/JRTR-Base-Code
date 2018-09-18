@@ -2,6 +2,7 @@ package simple;
 
 import jrtr.*;
 import jrtr.glrenderer.*;
+import jrtr.swrenderer.*;
 
 import javax.swing.*;
 import java.awt.event.*;
