@@ -4,11 +4,20 @@ import jrtr.*;
 import jrtr.glrenderer.*;
 import jrtr.swrenderer.*;
 
-import javax.swing.*;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_ESCAPE;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_S;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_P;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_N;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_D;
+import static org.lwjgl.glfw.GLFW.GLFW_KEY_M;
+import static org.lwjgl.glfw.GLFW.GLFW_RELEASE;
+import static org.lwjgl.glfw.GLFW.glfwSetKeyCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetMouseButtonCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback;
+import static org.lwjgl.glfw.GLFW.glfwSetWindowShouldClose;
+
 import java.awt.event.*;
 import javax.vecmath.*;
-import java.util.Timer;
-import java.util.TimerTask;
 
 /**
  * Implements a simple 3D rendering application using the 3D rendering API 
@@ -28,16 +37,17 @@ public class simple
 
 	/**
 	 * An extension of {@link GLRenderPanel} or {@link SWRenderPanel} to 
-	 * provide a call-back function for initialization. 
+	 * provide a call-back function for initialization. Keyboard and mouse
+	 * input are handled by the GLFW library and we also define call back 
+	 * functions for these inputs here.
 	 */ 
 	public final static class SimpleRenderPanel extends GLRenderPanel
 	{
 		/**
 		 * Initialization call-back. We initialize our renderer and scene here.
-		 * We construct a simple 3D scene consisting of a cube and start a timer 
-		 * task to generate an animation.
+		 * We construct a simple 3D scene consisting of a cube.
 		 * 
-		 * @param r	the render context that is associated with this render panel
+		 * @param r	the {@link RenderContext} that is associated with this render panel
 		 */
 		public void init(RenderContext r)
 		{
@@ -79,11 +89,59 @@ public class simple
 				System.out.print(e.getMessage());
 			}
 
-			// Register a timer task
-		    Timer timer = new Timer();
-		    basicstep = 0.01f;
-		    currentstep = basicstep;
-		    timer.scheduleAtFixedRate(new AnimationTask(), 0, 10);
+			// Step size for rotating animation
+			currentstep = 0.01f;
+			basicstep = 0.01f;
+			
+			// Setup a key callback. It will be called every time a key is pressed, repeated or released.
+			glfwSetKeyCallback(window, (window, key, scancode, action, mods) -> {
+				if ( action == GLFW_RELEASE ) {			
+					switch(key)
+					{
+						case GLFW_KEY_ESCAPE:
+						{
+							glfwSetWindowShouldClose(window, true); // We will detect this in the rendering loop;	
+						}
+						case GLFW_KEY_S: {
+							// Stop animation
+							currentstep = 0;
+							break;
+						}
+						case GLFW_KEY_P: {
+							// Resume animation
+							currentstep = basicstep;
+							break;
+						}
+						case GLFW_KEY_N: {
+							// Remove material from shape, and set "normal" shader
+							shape.setMaterial(null);
+							renderContext.useShader(normalShader);
+							break;
+						}
+						case GLFW_KEY_D: {
+							// Remove material from shape, and set "default" shader
+							shape.setMaterial(null);
+							renderContext.useDefaultShader();
+							break;
+						}
+						case GLFW_KEY_M: {
+							// Set a material for more complex shading of the shape
+							if(shape.getMaterial() == null) {
+								shape.setMaterial(material);
+							} else
+							{
+								shape.setMaterial(null);
+								renderContext.useDefaultShader();
+							}
+							break;
+						}
+					}
+				}
+			});
+
+			// These can be used later to enable mouse input
+			glfwSetMouseButtonCallback(window, (window, button, action, modes) -> {});
+			glfwSetCursorPosCallback(window, (window, xpos, ypos) -> {});
 		}
 
 		/**
@@ -147,15 +205,11 @@ public class simple
 			
 			return vertexData;
 		}
-	}
-
-	/**
-	 * A timer task that generates an animation. This task triggers
-	 * the redrawing of the 3D scene every time it is executed.
-	 */
-	public static class AnimationTask extends TimerTask
-	{
-		public void run()
+		
+		/*
+		 * This is called at fixed time intervals by the main render loop in {@link GLRenderPanel}.
+		 */
+		public void executeStep()
 		{
 			// Update transformation by rotating with angle "currentstep"
     		Matrix4f t = shape.getTransformation();
@@ -166,110 +220,14 @@ public class simple
     		t.mul(rotX);
     		t.mul(rotY);
     		shape.setTransformation(t);
-    		
-    		// Trigger redrawing of the render window
-    		renderPanel.getCanvas().repaint(); 
 		}
 	}
 
-	/**
-	 * A mouse listener for the main window. This can be
-	 * used to process mouse events.
-	 */
-	public static class SimpleMouseListener implements MouseListener
-	{
-    	public void mousePressed(MouseEvent e) {}
-    	public void mouseReleased(MouseEvent e) {}
-    	public void mouseEntered(MouseEvent e) {}
-    	public void mouseExited(MouseEvent e) {}
-    	public void mouseClicked(MouseEvent e) {}
-	}
-	
-	/**
-	 * A key listener for the main window. Use this to process key events.
-	 * Currently this provides the following controls:
-	 * 's': stop animation
-	 * 'p': play animation
-	 * '+': accelerate rotation
-	 * '-': slow down rotation
-	 * 'd': default shader
-	 * 'n': shader using surface normals
-	 * 'm': use a material for shading
-	 */
-	public static class SimpleKeyListener implements KeyListener
-	{
-		public void keyPressed(KeyEvent e)
-		{
-			switch(e.getKeyChar())
-			{
-				case 's': {
-					// Stop animation
-					currentstep = 0;
-					break;
-				}
-				case 'p': {
-					// Resume animation
-					currentstep = basicstep;
-					break;
-				}
-				case '+': {
-					// Accelerate roation
-					currentstep += basicstep;
-					break;
-				}
-				case '-': {
-					// Slow down rotation
-					currentstep -= basicstep;
-					break;
-				}
-				case 'n': {
-					// Remove material from shape, and set "normal" shader
-					shape.setMaterial(null);
-					renderContext.useShader(normalShader);
-					break;
-				}
-				case 'd': {
-					// Remove material from shape, and set "default" shader
-					shape.setMaterial(null);
-					renderContext.useDefaultShader();
-					break;
-				}
-				case 'm': {
-					// Set a material for more complex shading of the shape
-					if(shape.getMaterial() == null) {
-						shape.setMaterial(material);
-					} else
-					{
-						shape.setMaterial(null);
-						renderContext.useDefaultShader();
-					}
-					break;
-				}
-			}
-			
-			// Trigger redrawing
-			renderPanel.getCanvas().repaint();
-		}
-		
-		public void keyReleased(KeyEvent e)
-		{
-		}
-
-		public void keyTyped(KeyEvent e)
-        {
-        }
-
-	}
 	
 	/**
 	 * The main function opens a window 3D rendering window, implemented by the class
-	 * {@link SimpleRenderPanel}. {@link SimpleRenderPanel#init} is then called backed 
-	 * for initialization automatically by the Java event dispatching thread (EDT), see
-	 * <a href="https://stackoverflow.com/questions/7217013/java-event-dispatching-thread-explanation" target="_blank">
-	 * this discussion on stackoverflow</a> and <a href="https://en.wikipedia.org/wiki/Event_dispatching_thread" target="_blank">
-	 * this explanation on wikipedia</a>. Additional event listeners are added to handle mouse
-	 * and keyboard events from the EDT. {@link SimpleRenderPanel#init}
-	 * constructs a simple 3D scene, and starts a timer task to generate an animation.
+	 * {@link SimpleRenderPanel}. {@link SimpleRenderPanel#init} is then called back 
+	 * for initialization. {@link SimpleRenderPanel#init} constructs a simple 3D scene. 
 	 */
 	public static void main(String[] args)
 	{		
@@ -277,18 +235,7 @@ public class simple
 		// (see above) will be called back for initialization.
 		renderPanel = new SimpleRenderPanel();
 		
-		// Make the main window of this application and add the renderer to it
-		JFrame jframe = new JFrame("simple");
-		jframe.setSize(500, 500);
-		jframe.setLocationRelativeTo(null); // center of screen
-		jframe.getContentPane().add(renderPanel.getCanvas());// put the canvas into a JFrame window
-
-		// Add a mouse and key listener
-	    renderPanel.getCanvas().addMouseListener(new SimpleMouseListener());
-	    renderPanel.getCanvas().addKeyListener(new SimpleKeyListener());
-		renderPanel.getCanvas().setFocusable(true);   	    	    
-	    
-	    jframe.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-	    jframe.setVisible(true); // show window
+		// Show the render panel and enter its event loop.
+	    renderPanel.showWindow();
 	}
 }
