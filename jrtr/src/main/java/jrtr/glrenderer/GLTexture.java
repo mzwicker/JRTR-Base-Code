@@ -1,6 +1,6 @@
 package jrtr.glrenderer;
 
-import com.jogamp.opengl.GL3;
+import static org.lwjgl.opengl.GL45.*;
 
 import jrtr.Texture;
 
@@ -16,13 +16,11 @@ import java.nio.*;
  */
 public class GLTexture implements Texture {
 	
-	private GL3 gl;			// The OpenGL context that stores the texture
 	private IntBuffer id;	// Stores the OpenGL texture identifier
 	private int w, h;		// Width and height
 	
-	public GLTexture(GL3 gl)
+	public GLTexture()
 	{
-		this.gl = gl;
 		id = IntBuffer.allocate(1);	// Make the buffer that will store the texture identifier
 	}
 
@@ -36,15 +34,15 @@ public class GLTexture implements Texture {
 		File f = new File(fileName);
 		i = ImageIO.read(f);
 	
-		gl.glPixelStorei(GL3.GL_UNPACK_ALIGNMENT, 1);
-		gl.glGenTextures(1, id);
-		gl.glBindTexture(GL3.GL_TEXTURE_2D, id.get(0));
+		glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+		id.put(0, glGenTextures());
+		glBindTexture(GL_TEXTURE_2D, id.get(0));
 
 		w = i.getWidth();
 		h = i.getHeight();
 		
 		IntBuffer buf = getData(i);
-		gl.glTexImage2D(GL3.GL_TEXTURE_2D, 0, GL3.GL_RGBA, w, h, 0, GL3.GL_RGBA, GL3.GL_UNSIGNED_BYTE, buf);			
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, w, h, 0, GL_RGBA, GL_UNSIGNED_BYTE, buf);			
 	}
 	
 	public int getId()

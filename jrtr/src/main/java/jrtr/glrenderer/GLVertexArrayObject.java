@@ -2,7 +2,9 @@ package jrtr.glrenderer;
 
 import java.nio.IntBuffer;
 
-import com.jogamp.opengl.GL3;
+import static org.lwjgl.opengl.GL45.*;
+
+//import com.jogamp.opengl.GL3;
 
 /**
  * A utility class to encapsulate an OpenGL "vertex array object" (VAO).
@@ -12,7 +14,7 @@ public class GLVertexArrayObject {
 	private IntBuffer vao;
 	private IntBuffer vbo;
 
-	private GL3 gl;
+//	private GL3 gl;
 
 	/**
 	 * Make an OpenGL "vertex array object" (VAO) with a desired number of
@@ -26,19 +28,18 @@ public class GLVertexArrayObject {
 	 * @param numberOfVBOs
 	 * 		the number of VBOs to be stored in the VAO
 	 */
-	public GLVertexArrayObject(GL3 gl, int numberOfVBOs) {
-		this.gl = gl;
+	public GLVertexArrayObject(int numberOfVBOs) {
 
 		// For all vertex attributes, make vertex buffer objects.
 		// References to the VBOs are stored in the array vbo.
 		vbo = IntBuffer.allocate(numberOfVBOs);
-		gl.glGenBuffers(numberOfVBOs, vbo);
-
+		for(int i=0; i<numberOfVBOs;i++)
+			vbo.put(i, glGenBuffers());
+		
 		// Make a vertex array object. A reference to the VAO
 		// is stored in the array vao.
 		vao = IntBuffer.allocate(1);
-		gl.glGenVertexArrays(1, vao);
-
+		vao.put(0, glGenVertexArrays());
 	}
 
 	/**
@@ -60,16 +61,16 @@ public class GLVertexArrayObject {
 	 * with the VAO becomes active in OpenGL.
 	 */
 	public void bind() {
-		gl.glBindVertexArray(vao.get(0));
+		glBindVertexArray(vao.get(0));
 	}
 
 	/**
 	 * Deletes all vbos and the vertex array;
 	 */
 	public void dispose(){
-		gl.glBindVertexArray(0);
-		gl.glBindBuffer(0, 0);
-		gl.glDeleteBuffers(1, vbo);
-		gl.glDeleteVertexArrays(1, vao);
+		glBindVertexArray(0);
+		glBindBuffer(0, 0);
+		glDeleteBuffers(vbo);
+		glDeleteVertexArrays(vao);
 	}
 }

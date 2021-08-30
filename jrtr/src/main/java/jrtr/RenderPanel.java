@@ -1,7 +1,5 @@
 package jrtr;
 
-import java.awt.Component;
-
 import jrtr.glrenderer.GLRenderPanel;
 import jrtr.swrenderer.SWRenderPanel;
 
@@ -19,9 +17,14 @@ public interface RenderPanel {
 	 */
 	void init(RenderContext renderContext);
 	
-	/** 
-	 * Obtain a <code>Component</code> that contains the rendered 
-	 * image.
-	 */ 
-	Component getCanvas();
+	/*
+	 * Show the rendering window.
+	 */
+	void showWindow();
+	
+	/*
+	 * Call back function that needs to be called at fixed time
+	 * intervals by the render panel.
+	 */
+	void executeStep();	
 }

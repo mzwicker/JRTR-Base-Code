@@ -1,11 +1,7 @@
 package jrtr.glrenderer;
 
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.*;
-
-import com.jogamp.opengl.GL3;
-import com.jogamp.opengl.GLAutoDrawable;
+import static org.lwjgl.opengl.GL45.*;
 import javax.vecmath.*;
 
 import jrtr.Light;
@@ -17,17 +13,14 @@ import jrtr.SceneManagerIterator;
 import jrtr.Shader;
 import jrtr.Texture;
 import jrtr.VertexData;
-import jrtr.VertexData.VertexElement;
-
 
 /**
  * Implements a {@link RenderContext} (a renderer) using OpenGL
- * version 3 (or later).
+ * version 3 (or later). 
  */
 public class GLRenderContext implements RenderContext {
 
 	private SceneManagerInterface sceneManager;
-	private GL3 gl;
 
 	/**
 	 * The default shader for this render context.
@@ -42,17 +35,12 @@ public class GLRenderContext implements RenderContext {
 
 	/**
 	 * This constructor is called by {@link GLRenderPanel}.
-	 * 
-	 * @param drawable
-	 *            the OpenGL rendering context. All OpenGL calls are directed to
-	 *            this object.
 	 */
-	public GLRenderContext(GLAutoDrawable drawable) {
+	public GLRenderContext() {
 		
 		// Some OpenGL initialization
-		gl = drawable.getGL().getGL3();
-		gl.glEnable(GL3.GL_DEPTH_TEST);
-		gl.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+		glEnable(GL_DEPTH_TEST);
+		glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 
 		// Load and use the default shader
 		defaultShader = (GLShader) makeShader();
@@ -79,11 +67,8 @@ public class GLRenderContext implements RenderContext {
 	 * method traverses the scene using the scene manager and passes each object
 	 * to the rendering method.
 	 */
-	public void display(GLAutoDrawable drawable) {
+	public void display() {
 		
-		// Get reference to the OpenGL rendering context
-		gl = drawable.getGL().getGL3();
-
 		// Do some processing at the beginning of the frame
 		beginFrame();
 
@@ -106,11 +91,11 @@ public class GLRenderContext implements RenderContext {
 	 */
 	private void beginFrame() {
 		// Set the active shader as default for this frame
-		gl.glUseProgram(activeShaderID);
+		glUseProgram(activeShaderID);
 		
 		// Clear color and depth buffer for the new frame
-		gl.glClear(GL3.GL_COLOR_BUFFER_BIT);
-		gl.glClear(GL3.GL_DEPTH_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_DEPTH_BUFFER_BIT);
 	}
 
 	/**
@@ -119,7 +104,7 @@ public class GLRenderContext implements RenderContext {
 	 */
 	private void endFrame() {
 		// Flush the OpenGL pipeline
-		gl.glFlush();
+		glFlush();
 	}
 
 	/**
@@ -170,7 +155,7 @@ public class GLRenderContext implements RenderContext {
 			int dim = e.getNumberOfComponents();
 
 			// Bind the next vertex buffer object
-			gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, vertexData.getVAO().getNextVBO());
+			glBindBuffer(GL_ARRAY_BUFFER, vertexData.getVAO().getNextVBO());
 
 			// Tell OpenGL which "in" variable in the vertex shader corresponds
 			// to the current vertex buffer object.
@@ -180,32 +165,30 @@ public class GLRenderContext implements RenderContext {
 			int attribIndex = -1;
 			switch (e.getSemantic()) {
 			case POSITION:
-				attribIndex = gl
-						.glGetAttribLocation(activeShaderID, "position");
+				attribIndex = glGetAttribLocation(activeShaderID, "position");
 				break;
 			case NORMAL:
-				attribIndex = gl.glGetAttribLocation(activeShaderID, "normal");
+				attribIndex = glGetAttribLocation(activeShaderID, "normal");
 				break;
 			case COLOR:
-				attribIndex = gl.glGetAttribLocation(activeShaderID, "color");
+				attribIndex = glGetAttribLocation(activeShaderID, "color");
 				break;
 			case TEXCOORD:
-				attribIndex = gl
-						.glGetAttribLocation(activeShaderID, "texcoord");
+				attribIndex = glGetAttribLocation(activeShaderID, "texcoord");
 				break;
 			}
 
-			gl.glVertexAttribPointer(attribIndex, dim, GL3.GL_FLOAT, false, 0,
+			glVertexAttribPointer(attribIndex, dim, GL_FLOAT, false, 0,
 					0);
-			gl.glEnableVertexAttribArray(attribIndex);
+			glEnableVertexAttribArray(attribIndex);
 		}
 
 		// Render the vertex buffer objects
-		gl.glDrawElements(GL3.GL_TRIANGLES, renderItem.getShape()
-				.getVertexData().getIndices().length, GL3.GL_UNSIGNED_INT, 0);
+		glDrawElements(GL_TRIANGLES, renderItem.getShape()
+				.getVertexData().getIndices().length, GL_UNSIGNED_INT, 0);
 
 		// We are done with this shape, bind the default vertex array
-		gl.glBindVertexArray(0);
+		glBindVertexArray(0);
 
 		cleanMaterial(renderItem.getShape().getMaterial());
 	}
@@ -222,7 +205,7 @@ public class GLRenderContext implements RenderContext {
 		
 		// Make a vertex array object (VAO) for this vertex data
 		// and store a reference to it
-		GLVertexArrayObject vao = new GLVertexArrayObject(gl, data.getElements().size() + 1);
+		GLVertexArrayObject vao = new GLVertexArrayObject(data.getElements().size() + 1);
 		data.setVAO(vao);
 		
 		// Bind (activate) the VAO for the vertex data in OpenGL.
@@ -238,25 +221,21 @@ public class GLRenderContext implements RenderContext {
 			VertexData.VertexElement e = itr.next();
 
 			// Bind the vertex buffer object (VBO)
-			gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, data.getVAO().getNextVBO());
+			glBindBuffer(GL_ARRAY_BUFFER, data.getVAO().getNextVBO());
 			// Upload vertex data
-			gl.glBufferData(GL3.GL_ARRAY_BUFFER, e.getData().length * 4,
-					FloatBuffer.wrap(e.getData()), GL3.GL_DYNAMIC_DRAW);
-
+			glBufferData(GL_ARRAY_BUFFER, e.getData(), GL_DYNAMIC_DRAW);
 		}
 
 		// Bind the default vertex buffer objects
-		gl.glBindBuffer(GL3.GL_ARRAY_BUFFER, 0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
 
 		// Store the vertex data indices into the last vertex buffer
-		gl.glBindBuffer(GL3.GL_ELEMENT_ARRAY_BUFFER, data.getVAO().getNextVBO());
-		gl.glBufferData(GL3.GL_ELEMENT_ARRAY_BUFFER,
-				data.getIndices().length * 4,
-				IntBuffer.wrap(data.getIndices()), GL3.GL_DYNAMIC_DRAW);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, data.getVAO().getNextVBO());
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, data.getIndices(), GL_DYNAMIC_DRAW);
 
 		// Bind the default vertex array object. This "deactivates" the VAO
 		// of the vertex data
-		gl.glBindVertexArray(0);		
+		glBindVertexArray(0);		
 	}
 
 	private void setTransformation(Matrix4f transformation) {
@@ -267,12 +246,13 @@ public class GLRenderContext implements RenderContext {
 		modelview.mul(transformation);
 
 		// Set modelview and projection matrices in shader
-		gl.glUniformMatrix4fv(
-				gl.glGetUniformLocation(activeShaderID, "modelview"), 1, false,
-				transformationToFloat16(modelview), 0);
-		gl.glUniformMatrix4fv(gl.glGetUniformLocation(activeShaderID,
-				"projection"), 1, false, transformationToFloat16(sceneManager
-				.getFrustum().getProjectionMatrix()), 0);
+		glUniformMatrix4fv(
+				glGetUniformLocation(activeShaderID, "modelview"), false,
+				transformationToFloat16(modelview));
+		glUniformMatrix4fv(glGetUniformLocation(activeShaderID,
+				"projection"), false, transformationToFloat16(sceneManager
+				.getFrustum().getProjectionMatrix()));
+
 
 	}
 
@@ -297,21 +277,21 @@ public class GLRenderContext implements RenderContext {
 			// Activate the diffuse texture, if the material has one
 			if(m.diffuseMap != null) {
 				// OpenGL calls to activate the texture 
-				gl.glActiveTexture(GL3.GL_TEXTURE0);	// Work with texture unit 0
-				gl.glEnable(GL3.GL_TEXTURE_2D);
-				gl.glBindTexture(GL3.GL_TEXTURE_2D, ((GLTexture)m.diffuseMap).getId());
-				gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MAG_FILTER, GL3.GL_LINEAR);
-				gl.glTexParameteri(GL3.GL_TEXTURE_2D, GL3.GL_TEXTURE_MIN_FILTER, GL3.GL_LINEAR);
+				glActiveTexture(GL_TEXTURE0);	// Work with texture unit 0
+				glEnable(GL_TEXTURE_2D);
+				glBindTexture(GL_TEXTURE_2D, ((GLTexture)m.diffuseMap).getId());
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+				glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 				// We assume the texture in the shader is called "myTexture"
-				id = gl.glGetUniformLocation(activeShaderID, "myTexture");
-				gl.glUniform1i(id, 0);	// The variable in the shader needs to be set to the desired texture unit, i.e., 0
+				id = glGetUniformLocation(activeShaderID, "myTexture");
+				glUniform1i(id, 0);	// The variable in the shader needs to be set to the desired texture unit, i.e., 0
 			}
 			
 			// Pass a default light source to shader
 			String lightString = "lightDirection[" + 0 + "]";			
-			id = gl.glGetUniformLocation(activeShaderID, lightString);
+			id = glGetUniformLocation(activeShaderID, lightString);
 			if(id!=-1)
-				gl.glUniform4f(id, 0, 0, 1, 0.f);		// Set light direction
+				glUniform4f(id, 0, 0, 1, 0.f);		// Set light direction
 			else
 				System.out.print("Could not get location of uniform variable " + lightString + "\n");
 			int nLights = 1;
@@ -328,9 +308,9 @@ public class GLRenderContext implements RenderContext {
 					
 					// Pass light direction to shader, we assume the shader stores it in an array "lightDirection[]"
 					lightString = "lightDirection[" + nLights + "]";			
-					id = gl.glGetUniformLocation(activeShaderID, lightString);
+					id = glGetUniformLocation(activeShaderID, lightString);
 					if(id!=-1)
-						gl.glUniform4f(id, l.direction.x, l.direction.y, l.direction.z, 0.f);		// Set light direction
+						glUniform4f(id, l.direction.x, l.direction.y, l.direction.z, 0.f);		// Set light direction
 					else
 						System.out.print("Could not get location of uniform variable " + lightString + "\n");
 					
@@ -338,9 +318,9 @@ public class GLRenderContext implements RenderContext {
 				}
 				
 				// Pass number of lights to shader, we assume this is in a variable "nLights" in the shader
-				id = gl.glGetUniformLocation(activeShaderID, "nLights");
+				id = glGetUniformLocation(activeShaderID, "nLights");
 				if(id!=-1)
-					gl.glUniform1i(id, nLights);		// Set number of lightrs
+					glUniform1i(id, nLights);		// Set number of lightrs
 // Only for debugging				
 //				else
 //					System.out.print("Could not get location of uniform variable nLights\n");
@@ -365,7 +345,7 @@ public class GLRenderContext implements RenderContext {
 	public void useShader(Shader s) {
 		if (s != null) {
 			activeShaderID = ((GLShader)s).programId();
-			gl.glUseProgram(activeShaderID);
+			glUseProgram(activeShaderID);
 		}
 	}
 
@@ -378,11 +358,11 @@ public class GLRenderContext implements RenderContext {
 	}
 
 	public Shader makeShader() {
-		return new GLShader(gl);
+		return new GLShader();
 	}
 
 	public Texture makeTexture() {
-		return new GLTexture(gl);
+		return new GLTexture();
 	}
 
 	public VertexData makeVertexData(int n) {

@@ -3,33 +3,89 @@
   <groupId>cgg.unibe.ch</groupId>
   <artifactId>jrtr</artifactId>
   <version>0.0.1-SNAPSHOT</version>
+  
+	<properties>
+		<lwjgl.version>3.2.3</lwjgl.version>
+		<lwjgl.natives>natives-windows</lwjgl.natives>
+	</properties>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.lwjgl</groupId>
+				<artifactId>lwjgl-bom</artifactId>
+				<version>${lwjgl.version}</version>
+				<scope>import</scope>
+				<type>pom</type>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+  
   <dependencies>
   	<dependency>
   		<groupId>javax.vecmath</groupId>
   		<artifactId>vecmath</artifactId>
   		<version>1.5.2</version>
   	</dependency>
-  	<dependency>
-  		<groupId>org.jogamp.jogl</groupId>
-  		<artifactId>jogl-all-main</artifactId>
-  		<version>2.3.2</version>
-  	</dependency>
-  	<dependency>
-  		<groupId>org.jogamp.gluegen</groupId>
-  		<artifactId>gluegen-rt-main</artifactId>
-  		<version>2.3.2</version>
-  	</dependency>
+  	
+	
 	<dependency>
-  		<groupId>net.java.dev.jna</groupId>
-  		<artifactId>jna</artifactId>
-  		<version>4.2.2</version>
-  	</dependency>
-	<dependency>
-		<groupId>jopenvr</groupId>
-		<artifactId>jopenvr</artifactId>
-		<version>0.0.1-SNAPSHOT</version>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl</artifactId>
 	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-assimp</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-glfw</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-openal</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-opengl</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-stb</artifactId>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl</artifactId>
+		<classifier>${lwjgl.natives}</classifier>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-assimp</artifactId>
+		<classifier>${lwjgl.natives}</classifier>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-glfw</artifactId>
+		<classifier>${lwjgl.natives}</classifier>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-openal</artifactId>
+		<classifier>${lwjgl.natives}</classifier>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-opengl</artifactId>
+		<classifier>${lwjgl.natives}</classifier>
+	</dependency>
+	<dependency>
+		<groupId>org.lwjgl</groupId>
+		<artifactId>lwjgl-stb</artifactId>
+		<classifier>${lwjgl.natives}</classifier>
+	</dependency>
+	
   </dependencies>
+  
   <build>
 	<pluginManagement>
 		<plugins>
